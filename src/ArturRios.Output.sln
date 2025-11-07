@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArturRios.Output", "ArturRios.Output.csproj", "{12D77818-DC7D-4E61-8FA0-44BA55CC2F5E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArturRios.Output.Tests", "..\tests\ArturRios.Output.Tests\ArturRios.Output.Tests.csproj", "{BB556E81-0490-4BAD-8BC1-21F30EF6B7A9}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{12D77818-DC7D-4E61-8FA0-44BA55CC2F5E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{12D77818-DC7D-4E61-8FA0-44BA55CC2F5E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{12D77818-DC7D-4E61-8FA0-44BA55CC2F5E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{12D77818-DC7D-4E61-8FA0-44BA55CC2F5E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BB556E81-0490-4BAD-8BC1-21F30EF6B7A9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BB556E81-0490-4BAD-8BC1-21F30EF6B7A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BB556E81-0490-4BAD-8BC1-21F30EF6B7A9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BB556E81-0490-4BAD-8BC1-21F30EF6B7A9}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
