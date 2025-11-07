@@ -5,7 +5,12 @@ on:
     branches: [ main ]
     paths:
       - '**/TestReports/**'
-  workflow_dispatch: {}
+  workflow_dispatch: { }
+
+# Grant the workflow permission to write repository contents and pages (needed for pushing to gh-pages)
+permissions:
+  contents: write
+  pages: write
 
 jobs:
   publish:
@@ -13,6 +18,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+          fetch-depth: 0
 
       - name: Debug - show any TestReports files
         run: |
