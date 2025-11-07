@@ -15,7 +15,7 @@ includes IQueryable pagination extension methods (synchronous & asynchronous).
 - Usage examples
 - Add as a Git submodule and reference
 - Mermaid class diagram
-- Notes & recommended fixes
+- Notes
 
 ---
 
@@ -76,13 +76,11 @@ don't).
 - `PaginatedOutputExtensions` (static)
     - Purpose: Extension methods for `IQueryable<T>` to paginate a query and return a `PaginatedOutput<T>`.
     - Methods:
-      -
-      `Task<PaginatedOutput<T>> PaginateAsync<T>(this IQueryable<T> query, int pageNumber, int pageSize, Expression<Func<T, object?>>? orderBy = null, CancellationToken cancellationToken = default)`
-      - Uses EF Core async if the query provider supports `IAsyncQueryProvider`; otherwise falls back to
-      synchronous `ToList()`.
-        -
-      `PaginatedOutput<T> Paginate<T>(this IQueryable<T> query, int pageNumber, int pageSize, Expression<Func<T, object?>>? orderBy = null)`
-      - Synchronous variant. When provided, `orderBy` is applied.
+      - `Task<PaginatedOutput<T>> PaginateAsync<T>(this IQueryable<T> query, int pageNumber, int pageSize, Expression<Func<T, object?>>? orderBy = null, CancellationToken cancellationToken = default)`
+        - Uses EF Core async if the query provider supports `IAsyncQueryProvider`; otherwise falls back to
+        synchronous `ToList()`.
+      - `PaginatedOutput<T> Paginate<T>(this IQueryable<T> query, int pageNumber, int pageSize, Expression<Func<T, object?>>? orderBy = null)`
+        - Synchronous variant. When provided, `orderBy` is applied.
 
 ## Usage examples
 
