@@ -73,10 +73,10 @@ jobs:
 
       - name: Upload Pages artifact
         if: steps.prepare.outputs.publish_path != ''
-        uses: actions/upload-pages-artifact@v1
+        uses: actions/upload-pages-artifact@v2
         with:
           path: ${{ steps.prepare.outputs.publish_path }}
 
       - name: Deploy to GitHub Pages
         if: steps.prepare.outputs.publish_path != ''
-        uses: actions/deploy-pages@v1
+        uses: actions/deploy-pages@v2
