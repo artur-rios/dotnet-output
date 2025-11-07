@@ -4,7 +4,8 @@ on:
   push:
     branches: [ main ]
     paths:
-      - 'TestReports/**'
+      - '**/TestReports/**'
+  workflow_dispatch: {}
 
 jobs:
   publish:
@@ -12,6 +13,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Debug - show any TestReports files
+        run: |
+          echo "Listing files under any TestReports path (if present):"
+          find . -type f -path "*/TestReports/*" -print || true
 
       - name: Publish TestReports to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
