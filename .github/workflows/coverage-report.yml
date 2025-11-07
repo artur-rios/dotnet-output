@@ -7,7 +7,6 @@ on:
       - '**/TestReports/**'
   workflow_dispatch: {}
 
-# Grant the workflow permission to write repository contents and pages (needed for pushing to gh-pages)
 permissions:
   contents: write
   pages: write
@@ -22,21 +21,19 @@ jobs:
           persist-credentials: true
           fetch-depth: 0
 
-      - name: Debug - show any TestReports files (raw search)
+      - name: Debug - list TestReports files
         run: |
           echo "Listing files under any TestReports path (if present):"
-          find . -type f -path "*/TestReports/*" -print || true
+          find . -type f -path '*/TestReports/*' -print || true
 
       - id: find
         name: Find TestReports directory
         run: |
-          # Find the first directory named TestReports anywhere in the repo
-          REPORT_DIR=$(find . -type d -name "TestReports" -print -quit || true)
-          echo "Found TestReports directory: '$REPORT_DIR'"
+          REPORT_DIR=$(find . -type d -name 'TestReports' -print -quit || true)
           echo "REPORT_DIR=$REPORT_DIR" >> $GITHUB_OUTPUT
 
       - id: prepare
-        name: Prepare publish directory if TestReports exists and is non-empty
+        name: Prepare publish directory
         run: |
           REPORT_DIR="${{ steps.find.outputs.REPORT_DIR }}"
           if [ -z "$REPORT_DIR" ]; then
@@ -44,34 +41,42 @@ jobs:
             echo "publish_path=" >> $GITHUB_OUTPUT
             exit 0
           fi
-          # Check if the directory contains any files
           FIRST_FILE=$(find "$REPORT_DIR" -type f -print -quit || true)
           if [ -z "$FIRST_FILE" ]; then
             echo "TestReports directory exists but is empty. Skipping publish."
             echo "publish_path=" >> $GITHUB_OUTPUT
             exit 0
           fi
-          # Copy contents into a clean publish folder at repository root
           rm -rf publish
           mkdir -p publish
           cp -r "$REPORT_DIR"/. publish/
-          echo "Copied TestReports contents to ./publish"
+
+          # If publish contains a single top-level directory which itself contains index.html,
+          # move its contents to the publish root so Pages serves index at site root.
+          TOP_DIR_COUNT=$(find publish -mindepth 1 -maxdepth 1 -type d | wc -l)
+          if [ "$TOP_DIR_COUNT" -eq 1 ]; then
+            CHILD_DIR=$(find publish -mindepth 1 -maxdepth 1 -type d -print -quit)
+            if [ -f "$CHILD_DIR/index.html" ]; then
+              echo "Detected single child dir $CHILD_DIR containing index.html; flattening to publish root"
+              mv "$CHILD_DIR"/* publish/ || true
+              rm -rf "$CHILD_DIR"
+            fi
+          fi
+
           echo "publish_path=publish" >> $GITHUB_OUTPUT
 
       - name: Debug - show prepared publish files
         if: steps.prepare.outputs.publish_path != ''
         run: |
           echo "Files prepared for publish:"
-          find publish -maxdepth 3 -type f -print || true
+          find publish -maxdepth 5 -type f -print || true
 
-      - name: Publish TestReports to GitHub Pages
+      - name: Upload Pages artifact
         if: steps.prepare.outputs.publish_path != ''
-        uses: peaceiris/actions-gh-pages@v3
+        uses: actions/upload-pages-artifact@v1
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_branch: gh-pages
-          publish_dir: ${{ steps.prepare.outputs.publish_path }}
-          commit_message: 'chore: publish TestReports to GitHub Pages (on push to main)'
-          user_name: github-actions[bot]
-          user_email: 41898282+github-actions[bot]@users.noreply.github.com
-          keep_files: false
+          path: ${{ steps.prepare.outputs.publish_path }}
+
+      - name: Deploy to GitHub Pages
+        if: steps.prepare.outputs.publish_path != ''
+        uses: actions/deploy-pages@v1
