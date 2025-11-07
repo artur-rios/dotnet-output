@@ -1,53 +1,25 @@
-﻿name: Coverage Report
+﻿name: Publish TestReports
 
 on:
   push:
     branches: [ main ]
-  pull_request:
+    paths:
+      - 'TestReports/**'
 
 jobs:
-  coverage:
+  publish:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: '8.0.x'
-
-      - name: Restore
-        run: dotnet restore
-
-      - name: Build
-        run: dotnet build --no-restore --configuration Release
-
-      - name: Run tests and collect coverage
-        run: |
-          dotnet test --no-build --configuration Release \
-            --collect:"XPlat Code Coverage" \
-            --results-directory ./TestResults
-
-      - name: Install ReportGenerator
-        run: dotnet tool install --global dotnet-reportgenerator-globaltool --version 5.* || true
-
-      - name: Generate HTML coverage report
-        env:
-          PATH: ${{ env.PATH }}:$HOME/.dotnet/tools
-        run: |
-          reportgenerator -reports:./TestResults/**/coverage.cobertura.xml \
-            -targetdir:coverage-report -reporttypes:Html
-
-      - name: Upload coverage artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: coverage-report
-
-      - name: Deploy coverage to GitHub Pages
-        if: github.ref == 'refs/heads/main'
+      - name: Publish TestReports to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./coverage-report
+          publish_branch: gh-pages
+          publish_dir: TestReports
+          commit_message: 'chore: publish TestReports to GitHub Pages (on push to main)'
+          user_name: github-actions[bot]
+          user_email: 41898282+github-actions[bot]@users.noreply.github.com
+          keep_files: false
