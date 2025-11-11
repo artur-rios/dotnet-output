@@ -79,6 +79,12 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
+          # Preserve a copy of the generated site so branch switches / cleans don't remove it
+          if [ -d "publish" ]; then
+            rm -rf /tmp/publish_copy || true
+            cp -a publish /tmp/publish_copy
+          fi
+
           git fetch origin
 
           # Create or checkout gh-pages (track if exists, else orphan)
@@ -94,15 +100,32 @@ jobs:
             git rm -rf . || true
           fi
 
-          # Remove all tracked files and untracked files (avoid duplicates)
+          # Remove tracked files and clean working tree (the preserved copy is in /tmp/publish_copy)
           git rm -rf . || true
           git clean -fdx || true
 
-          # Copy only the contents of publish/ into repo root
+          # Ensure we have the preserved site
+          if [ ! -d "/tmp/publish_copy" ]; then
+            echo "Error: preserved publish copy not found at /tmp/publish_copy. Aborting."
+            exit 1
+          fi
+
+          # Copy everything from publish except `coverage-report` (bulk copy)
           if command -v rsync >/dev/null 2>&1; then
-            rsync -a --delete --no-perms --no-owner --no-group --chmod=ugo=rwX publish/ ./
+            rsync -av --delete --no-perms --no-owner --no-group --chmod=ugo=rwX --exclude='coverage-report/**' /tmp/publish_copy/ ./
           else
-            cp -a publish/. .
+            # fallback: remove existing files, then copy everything except coverage-report
+            find /tmp/publish_copy -mindepth 1 -maxdepth 1 -not -name 'coverage-report' -exec cp -a {} . \; || true
+          fi
+
+          # Now copy `coverage-report` exactly once into the repo root as ./coverage-report
+          if [ -d "/tmp/publish_copy/coverage-report" ]; then
+            if command -v rsync >/dev/null 2>&1; then
+              rsync -av --delete --no-perms --no-owner --no-group --chmod=ugo=rwX /tmp/publish_copy/coverage-report/ ./coverage-report/
+            else
+              mkdir -p ./coverage-report
+              cp -a /tmp/publish_copy/coverage-report/. ./coverage-report/
+            fi
           fi
 
           # Ensure index.html at repo root
