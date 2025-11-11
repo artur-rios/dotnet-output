@@ -48,11 +48,12 @@ jobs:
           mkdir -p publish
           hugo --source docs --destination publish
 
-      - name: Copy prebuilt coverage into publish/coverage-report
+      - name: Merge prebuilt `docs/coverage-report` into `publish/coverage-report` (once)
         run: |
           if [ -d "docs/coverage-report" ]; then
             mkdir -p publish/coverage-report
-            cp -r docs/coverage-report/. publish/coverage-report/
+            # sync contents (overwrite if present) — copies only once into publish
+            rsync -a --delete docs/coverage-report/ publish/coverage-report/
           else
             echo "No docs/coverage-report found; skipping copy"
           fi
@@ -66,20 +67,39 @@ jobs:
         env:
           GIT_COMMIT_MESSAGE: "Deploy docs from main: $GITHUB_SHA"
         run: |
+          set -e
+
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          # create or switch to gh-pages (orphan if not exists)
+          # Ensure remote info is up to date
+          git fetch origin
+
+          # Create or switch to gh-pages branch
           if git ls-remote --exit-code --heads origin gh-pages; then
-            git checkout gh-pages
-            git rm -rf . || true
+            # Create a local tracking branch (or switch to it)
+            if git show-ref --quiet refs/heads/gh-pages; then
+              git checkout gh-pages
+            else
+              git checkout --track origin/gh-pages
+            fi
           else
+            # create orphan branch if gh-pages doesn't exist yet
             git checkout --orphan gh-pages
-            git rm -rf . || true
           fi
 
-          # copy built site into repo root
-          cp -a publish/. .
+          # Remove all tracked and untracked files to avoid duplicates (including leftover `docs`)
+          git rm -rf . || true
+          git clean -fdx || true
+
+          # Copy only the *contents* of publish into the repo root (preserves root index.html)
+          rsync -a --delete publish/ ./
+
+          # Ensure index.html exists at repo root (fail if site build missing)
+          if [ ! -f index.html ]; then
+            echo "Error: publish/index.html not found. Aborting deploy."
+            exit 1
+          fi
 
           # prevent Jekyll processing
           touch .nojekyll
