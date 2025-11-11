@@ -79,10 +79,14 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          # Preserve the generated site so branch switches / cleans don't remove it
-          if [ -d "publish" ]; then
-            rm -rf /tmp/publish_copy || true
-            cp -a publish /tmp/publish_copy
+          # Preserve the generated site (copy contents of publish into /tmp/publish_copy)
+          rm -rf /tmp/publish_copy || true
+          mkdir -p /tmp/publish_copy
+          if command -v rsync >/dev/null 2>&1; then
+            rsync -a --delete publish/ /tmp/publish_copy/
+          else
+            # cp fallback: copy contents, not the directory itself
+            cp -a publish/. /tmp/publish_copy/
           fi
 
           git fetch origin
@@ -108,10 +112,11 @@ jobs:
             exit 1
           fi
 
-          # Copy the preserved site into repo root (this places index.html at repo root and includes coverage-report)
+          # Copy the preserved site contents into repo root (places index.html at repo root and includes coverage-report)
           if command -v rsync >/dev/null 2>&1; then
             rsync -a --delete --no-perms --no-owner --no-group --chmod=ugo=rwX /tmp/publish_copy/ ./
           else
+            # cp fallback: copy contents
             cp -a /tmp/publish_copy/. .
           fi
 
