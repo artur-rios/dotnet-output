@@ -1,0 +1,7 @@
+baseURL = 'https://artur-rios.github.io/dotnet-output/'
+languageCode = 'en-us'
+title = 'Dotnet Output'
+theme = 'hugo-theme-re-terminal'
+
+[params.logo]
+    logoText = 'Dotnet Output'

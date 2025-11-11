@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta name="generator" content="Hugo 0.148.2"><script src="/dotnet-output/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=dotnet-output/livereload" data-no-instant defer></script>
+  
+    <title>Dotnet Output</title>
+  
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="" />
+<meta name="keywords" content="" />
+
+  <meta name="robots" content="noodp" />
+
+<link rel="canonical" href="http://localhost:1313/dotnet-output/" />
+
+
+
+
+
+
+
+  
+  
+  
+  
+  
+  <link rel="stylesheet" href="http://localhost:1313/dotnet-output/styles.css">
+
+
+
+
+
+
+
+  <link rel="shortcut icon" href="http://localhost:1313/dotnet-output/img/theme-colors/orange.png">
+  <link rel="apple-touch-icon" href="http://localhost:1313/dotnet-output/img/theme-colors/orange.png">
+
+
+
+<meta name="twitter:card" content="summary" />
+
+
+
+<meta property="og:locale" content="en" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="Dotnet Output">
+<meta property="og:description" content="" />
+<meta property="og:url" content="http://localhost:1313/dotnet-output/" />
+<meta property="og:site_name" content="Dotnet Output" />
+
+  
+    <meta property="og:image" content="img/favicon/%!s(&lt;nil&gt;).png">
+  
+
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="627">
+
+
+
+
+
+  <link href="/dotnet-output/index.xml" rel="alternate" type="application/rss+xml" title="Dotnet Output" />
+
+
+
+
+
+
+
+
+
+
+  
+
+
+</head>
+<body class="">
+
+
+
+
+<div class="container center headings--one-size">
+
+  <header class="header">
+  <div class="header__inner">
+    <div class="header__logo">
+      <a href="http://localhost:1313/dotnet-output/">
+  <div class="logo">
+    Dotnet Output
+  </div>
+</a>
+
+    </div>
+    
+    
+  </div>
+  
+</header>
+
+
+  <div class="content">
+    
+  
+    <div class="index-content ">
+      <h1 id="documentation">Documentation</h1>
+<p>A .NET helper library that standardizes process and data outputs, provides a paginated output container, and
+includes IQueryable pagination extension methods (synchronous &amp; asynchronous).</p>
+<h2 id="contents">Contents</h2>
+<ul>
+<li>Project overview</li>
+<li>Classes
+<ul>
+<li><code>ProcessOutput</code></li>
+<li><code>DataOutput</code></li>
+<li><code>PaginatedOutput</code></li>
+<li><code>CustomException</code></li>
+<li><code>PaginatedOutputExtensions</code> (extension methods)</li>
+</ul>
+</li>
+<li>Usage examples</li>
+<li>Add as a Git submodule and reference</li>
+<li>Mermaid class diagram</li>
+<li>Notes</li>
+</ul>
+<hr>
+<h2 id="overview">Overview</h2>
+<p><code>ArturRios.Output</code> provides lightweight types to represent the result of operations in a consistent way. Typical use
+cases:</p>
+<ul>
+<li>Return success/failure information together with messages and errors</li>
+<li>Return typed data payloads with fluent helpers</li>
+<li>Return paginated list results and help paginate <code>IQueryable</code> sources (works with EF Core or in-memory LINQ)</li>
+</ul>
+<p>The library has no external runtime dependencies apart from <code>Microsoft.EntityFrameworkCore</code> when you call the EF-aware
+<code>PaginateAsync</code> extension (the extension is written to work with both IQueryables that support async and ones that
+don&rsquo;t).</p>
+<h2 id="classes">Classes</h2>
+<ul>
+<li>
+<p><code>ProcessOutput</code></p>
+<ul>
+<li>Purpose: Base container for operation results. Captures messages, errors, timestamp and a convenience <code>Success</code>
+flag.</li>
+<li>Key members:
+<ul>
+<li><code>List&lt;string&gt; Messages { get; }</code></li>
+<li><code>List&lt;string&gt; Errors { get; }</code></li>
+<li><code>DateTime Timestamp { get; }</code> (UTC)</li>
+<li><code>bool Success { get; }</code> (true when no errors)</li>
+<li>Fluent helpers: <code>WithError</code>, <code>WithErrors</code>, <code>WithMessage</code>, <code>WithMessages</code></li>
+<li>Add helpers: <code>AddError</code>, <code>AddErrors</code>, <code>AddMessage</code>, <code>AddMessages</code></li>
+<li>Static factory: <code>ProcessOutput.New</code></li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p><code>DataOutput&lt;T&gt;</code> : <code>ProcessOutput</code></p>
+<ul>
+<li>Purpose: Holds a typed data payload plus everything <code>ProcessOutput</code> provides.</li>
+<li>Key members:
+<ul>
+<li><code>T? Data { get; protected set; }</code></li>
+<li>Fluent API: <code>WithData(T)</code>, <code>WithError(string)</code>, <code>WithErrors(IEnumerable&lt;string&gt;)</code>,
+<code>WithMessage(string)</code>, <code>WithMessages(IEnumerable&lt;string&gt;)</code></li>
+<li>Static factory: <code>DataOutput&lt;T&gt;.New</code></li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p><code>PaginatedOutput&lt;T&gt;</code> : <code>DataOutput&lt;List&lt;T&gt;&gt;</code></p>
+<ul>
+<li>Purpose: Represents a paginated result set containing <code>List&lt;T&gt;</code> as the payload.</li>
+<li>Key members:
+<ul>
+<li><code>int PageNumber { get; set; }</code></li>
+<li><code>int PageSize { get; }</code> (derived from Data?.Count)</li>
+<li><code>int TotalItems { get; set; }</code></li>
+<li><code>int TotalPages { get; }</code> (computed as Ceil(TotalItems / PageSize))</li>
+<li>Helpers to build: <code>WithPagination(int pageNumber, int totalItems)</code>, <code>WithData(List&lt;T&gt;)</code>, <code>WithData(T)</code>,
+<code>WithEmptyData()</code>, <code>AddItem(T)</code>, <code>AddItems(IEnumerable&lt;T&gt;)</code></li>
+<li>Fluent <code>WithMessage</code> / <code>WithError</code> overloads preserved.</li>
+<li>Static factory: <code>PaginatedOutput&lt;T&gt;.New</code></li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p><code>CustomException</code> (abstract)</p>
+<ul>
+<li>Purpose: Base exception type wrapping an array of messages. Derive from it to create domain-specific exceptions
+that carry multiple messages.</li>
+<li>Key members:
+<ul>
+<li>Constructor that accepts <code>string[] messages</code> and builds the base <code>Exception</code> message by joining them</li>
+<li><code>string[] Messages { get; }</code></li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p><code>PaginatedOutputExtensions</code> (static)</p>
+<ul>
+<li>Purpose: Extension methods for <code>IQueryable&lt;T&gt;</code> to paginate a query and return a <code>PaginatedOutput&lt;T&gt;</code>.</li>
+<li>Methods:
+<ul>
+<li><code>Task&lt;PaginatedOutput&lt;T&gt;&gt; PaginateAsync&lt;T&gt;(this IQueryable&lt;T&gt; query, int pageNumber, int pageSize, Expression&lt;Func&lt;T, object?&gt;&gt;? orderBy = null, CancellationToken cancellationToken = default)</code>
+<ul>
+<li>Uses EF Core async if the query provider supports <code>IAsyncQueryProvider</code>; otherwise falls back to
+synchronous <code>ToList()</code>.</li>
+</ul>
+</li>
+<li><code>PaginatedOutput&lt;T&gt; Paginate&lt;T&gt;(this IQueryable&lt;T&gt; query, int pageNumber, int pageSize, Expression&lt;Func&lt;T, object?&gt;&gt;? orderBy = null)</code>
+<ul>
+<li>Synchronous variant. When provided, <code>orderBy</code> is applied.</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="usage-examples">Usage examples</h2>
+<h3 id="basic-processoutput--dataoutput">Basic (ProcessOutput / DataOutput)</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-csharp" data-lang="csharp"><span style="display:flex;"><span><span style="color:#66d9ef">using</span> ArturRios.Output;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Simple success response with a message</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">var</span> p = ProcessOutput.New.WithMessage(<span style="color:#e6db74">&#34;Operation completed&#34;</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Data output</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">var</span> d = DataOutput&lt;<span style="color:#66d9ef">int</span>&gt;.New
+</span></span><span style="display:flex;"><span>    .WithData(<span style="color:#ae81ff">42</span>)
+</span></span><span style="display:flex;"><span>    .WithMessage(<span style="color:#e6db74">&#34;Value computed&#34;</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> (!d.Success) {
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// inspect d.Errors</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h3 id="paginated-example-synchronous">Paginated example (synchronous)</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-csharp" data-lang="csharp"><span style="display:flex;"><span><span style="color:#66d9ef">using</span> ArturRios.Output;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>IQueryable&lt;MyEntity&gt; query = ...; <span style="color:#75715e">// your LINQ or EF Core query</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">int</span> pageNumber = <span style="color:#ae81ff">1</span>;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">int</span> pageSize = <span style="color:#ae81ff">20</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">var</span> page = query.Paginate(pageNumber, pageSize, e =&gt; e.CreatedAt);
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// page is PaginatedOutput&lt;MyEntity&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">var</span> items = page.Data; <span style="color:#75715e">// List&lt;MyEntity&gt;</span>
+</span></span></code></pre></div><h3 id="paginated-example-async-ef-core">Paginated example (async, EF Core)</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-csharp" data-lang="csharp"><span style="display:flex;"><span><span style="color:#66d9ef">using</span> ArturRios.Output;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">var</span> page = <span style="color:#66d9ef">await</span> dbContext.Set&lt;MyEntity&gt;()
+</span></span><span style="display:flex;"><span>    .Where(e =&gt; e.IsActive)
+</span></span><span style="display:flex;"><span>    .PaginateAsync(pageNumber: <span style="color:#ae81ff">2</span>, pageSize: <span style="color:#ae81ff">50</span>, orderBy: e =&gt; e.CreatedAt, cancellationToken: ct);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">var</span> items = page.Data; <span style="color:#75715e">// List&lt;MyEntity&gt;</span>
+</span></span></code></pre></div><h2 id="how-to-use-in-your-project">How to use in your project</h2>
+<p>Add as a Git submodule and reference the project in your solution:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># from your solution repository root</span>
+</span></span><span style="display:flex;"><span>git submodule add &lt;git-url-of-this-repo&gt; external/dotnet-output
+</span></span><span style="display:flex;"><span>git submodule update --init --recursive
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># then add the csproj to your solution (adjust path)</span>
+</span></span><span style="display:flex;"><span>dotnet sln add external/dotnet-output/src/ArturRios.Output.csproj
+</span></span></code></pre></div><p>This keeps the library as a normal project dependency and allows debugging into its code.</p>
+<h2 id="api-notes--gotchas">API notes &amp; gotchas</h2>
+<ul>
+<li><code>PaginatedOutput.PageSize</code> is derived from the returned <code>Data.Count</code> (i.e., the number of items in the current page).
+<code>TotalItems</code> is intended to be the total number of items across all pages. <code>TotalPages</code> is computed as
+<code>Ceiling(TotalItems / PageSize)</code>.</li>
+</ul>
+<h2 id="class-diagram">Class diagram</h2>
+<p>Below is a mermaid class diagram representing the public classes in this project. You can paste this into any
+mermaid-enabled renderer (for example GitHub markdown with mermaid enabled, or live editors).</p>
+<pre tabindex="0"><code class="language-mermaid" data-lang="mermaid">classDiagram
+    class ProcessOutput {
+        +Messages: List_string
+        +Errors: List_string
+        +Timestamp: DateTime
+        +Success: bool
+    }
+
+    class DataOutput_T {
+        +Data: T_optional
+    }
+
+    class PaginatedOutput_T {
+        +PageNumber: int
+        +PageSize: int
+        +TotalItems: int
+        +TotalPages: int
+    }
+
+    class CustomException {
+        +Messages: string_array
+    }
+
+    class PaginatedOutputExtensions {
+        +PaginateAsync()
+        +Paginate()
+    }
+
+    DataOutput_T --|&gt; ProcessOutput
+    PaginatedOutput_T --|&gt; DataOutput_T
+    PaginatedOutputExtensions ..&gt; PaginatedOutput_T: uses
+</code></pre><h2 id="contributing">Contributing</h2>
+<p>Contributions are welcome. For small fixes a PR with tests and a few usage examples is ideal.</p>
+<hr>
+
+    </div>
+  
+  <div class="posts">
+    
+    
+
+    
+    
+      
+    
+    
+
+    
+
+    <div class="pagination">
+  <div class="pagination__buttons">
+    
+    
+  </div>
+</div>
+
+  </div>
+
+  </div>
+
+  
+    <footer class="footer">
+  <div class="footer__inner">
+    
+      <div class="copyright">
+        <span>© 2025 Powered by <a href="https://gohugo.io">Hugo</a></span>
+    
+      <span>:: <a href="https://github.com/mirus-ua/hugo-theme-re-terminal" target="_blank">Theme</a> made by <a href="https://github.com/mirus-ua" target="_blank">Mirus</a></span>
+      </div>
+  </div>
+</footer>
+
+
+
+
+
+
+<script type="text/javascript" src="/dotnet-output/bundle.min.js"></script>
+
+
+
+
+
+
+
+
+  
+</div>
+
+</body>
+</html>

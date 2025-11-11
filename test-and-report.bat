@@ -2,7 +2,7 @@
 
 :: Define the path variables
 set TEST_RESULTS_PATH=.\tests\TestResults
-set TEST_REPORTS_PATH=.\tests\TestReports
+set TEST_REPORTS_PATH=.\docs\coverage-report
 set TESTS_PATH=.\tests
 
 :: Ensure TEST_RESULTS_PATH exists

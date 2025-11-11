@@ -1,0 +1,59 @@
+﻿name: Publish Docs & Coverage
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'docs/**'
+  workflow_dispatch: { }
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+          fetch-depth: 0
+
+      - name: Set up Hugo
+        uses: peaceiris/actions-hugo@v2
+        with:
+          hugo-version: '0.115.0'
+          extended: true
+
+      - name: Build Hugo site from `docs`
+        env:
+          HUGO_ENV: production
+        run: |
+          rm -rf publish
+          mkdir -p publish
+          hugo --source docs --destination publish
+
+      - name: Copy prebuilt coverage into publish/coverage-report
+        run: |
+          if [ -d "docs/coverage-report" ]; then
+            mkdir -p publish/coverage-report
+            cp -r docs/coverage-report/. publish/coverage-report/
+          else
+            echo "No docs/coverage-report found; skipping copy"
+          fi
+
+      - name: Debug - show prepared publish files
+        run: |
+          echo "Files prepared for publish (max depth 5):"
+          find publish -maxdepth 5 -type f -print || true
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: publish
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
