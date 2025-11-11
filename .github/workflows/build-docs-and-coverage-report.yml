@@ -59,8 +59,42 @@ jobs:
 
       - name: Show prepared publish files
         run: |
-          echo "Files prepared for gh-pages (max depth 5):"
+          set -euo pipefail
+
+          echo "=== publish directory size ==="
+          du -sh publish || true
+
+          echo "=== publish top-level listing ==="
+          ls -la publish || true
+
+          echo "=== publish file tree (max depth 5) ==="
           find publish -maxdepth 5 -type f -print || true
+
+          echo "=== Top-level entries and a small sample of their contents ==="
+          for p in publish/*; do
+            echo "---- $p ----"
+            if [ -d "$p" ]; then
+              echo "Directory listing (first 50 lines):"
+              ls -la "$p" | head -n 50 || true
+            else
+              echo "File info:"
+              ls -la "$p" || true
+            fi
+          done || true
+
+          echo "=== Check for publish/index.html ==="
+          if [ -f publish/index.html ]; then
+            echo "FOUND: publish/index.html"
+          else
+            echo "MISSING: publish/index.html"
+          fi
+
+          echo "=== Source docs top-level (to confirm source files exist) ==="
+          ls -la docs || true
+
+          echo "=== Summary: counts ==="
+          echo "Files in publish (recursively):"
+          find publish -type f | wc -l || true
 
       - name: Ensure `publish/index.html` and create `.nojekyll`
         run: |
