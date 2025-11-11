@@ -70,7 +70,7 @@ jobs:
           fi
           touch publish/.nojekyll
 
-      - name: Deploy to `gh-pages` branch
+      - name: Deploy to `gh-pages` branch (clear previous files and replace with publish)
         env:
           GIT_COMMIT_MESSAGE: "Deploy docs from main: $GITHUB_SHA"
         run: |
@@ -79,7 +79,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          # Preserve a copy of the generated site so branch switches / cleans don't remove it
+          # Preserve the generated site so branch switches / cleans don't remove it
           if [ -d "publish" ]; then
             rm -rf /tmp/publish_copy || true
             cp -a publish /tmp/publish_copy
@@ -87,7 +87,7 @@ jobs:
 
           git fetch origin
 
-          # Create or checkout gh-pages (track if exists, else orphan)
+          # Create or switch to gh-pages branch (track if exists, else orphan)
           if git ls-remote --exit-code --heads origin gh-pages; then
             if git show-ref --quiet refs/heads/gh-pages; then
               git checkout gh-pages
@@ -96,39 +96,26 @@ jobs:
             fi
           else
             git checkout --orphan gh-pages
-            # ensure no files remain staged from previous branch state
-            git rm -rf . || true
           fi
 
-          # Remove tracked files and clean working tree (the preserved copy is in /tmp/publish_copy)
+          # Remove all tracked files and fully clean working tree to ensure previous files are gone
           git rm -rf . || true
           git clean -fdx || true
 
-          # Ensure we have the preserved site
+          # Ensure preserved site exists
           if [ ! -d "/tmp/publish_copy" ]; then
             echo "Error: preserved publish copy not found at /tmp/publish_copy. Aborting."
             exit 1
           fi
 
-          # Copy everything from publish except `coverage-report` (bulk copy)
+          # Copy the preserved site into repo root (this places index.html at repo root and includes coverage-report)
           if command -v rsync >/dev/null 2>&1; then
-            rsync -av --delete --no-perms --no-owner --no-group --chmod=ugo=rwX --exclude='coverage-report/**' /tmp/publish_copy/ ./
+            rsync -a --delete --no-perms --no-owner --no-group --chmod=ugo=rwX /tmp/publish_copy/ ./
           else
-            # fallback: remove existing files, then copy everything except coverage-report
-            find /tmp/publish_copy -mindepth 1 -maxdepth 1 -not -name 'coverage-report' -exec cp -a {} . \; || true
+            cp -a /tmp/publish_copy/. .
           fi
 
-          # Now copy `coverage-report` exactly once into the repo root as ./coverage-report
-          if [ -d "/tmp/publish_copy/coverage-report" ]; then
-            if command -v rsync >/dev/null 2>&1; then
-              rsync -av --delete --no-perms --no-owner --no-group --chmod=ugo=rwX /tmp/publish_copy/coverage-report/ ./coverage-report/
-            else
-              mkdir -p ./coverage-report
-              cp -a /tmp/publish_copy/coverage-report/. ./coverage-report/
-            fi
-          fi
-
-          # Ensure index.html at repo root
+          # Verify index.html exists at repo root
           if [ ! -f index.html ]; then
             echo "Error: index.html not found at repo root after copy. Aborting."
             exit 1
