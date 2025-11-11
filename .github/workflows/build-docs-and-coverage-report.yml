@@ -5,17 +5,14 @@ on:
     branches: [ main ]
     paths:
       - 'docs/**'
-  workflow_dispatch: {}
+  workflow_dispatch: { }
 
 permissions:
   contents: write
-  pages: write
-  id-token: write
 
 jobs:
   publish:
     runs-on: ubuntu-latest
-    environment: github-pages
 
     steps:
       - name: Checkout
@@ -62,22 +59,65 @@ jobs:
 
       - name: Show prepared publish files
         run: |
-          echo "Files prepared for pages (max depth 5):"
+          echo "Files prepared for gh-pages (max depth 5):"
           find publish -maxdepth 5 -type f -print || true
 
-      - name: Ensure `index.html` and create `.nojekyll`
+      - name: Ensure `publish/index.html` and create `.nojekyll`
         run: |
           if [ ! -f publish/index.html ]; then
             echo "Error: publish/index.html not found. Aborting deploy."
             exit 1
           fi
-          # prevent Jekyll processing
           touch publish/.nojekyll
 
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: publish
+      - name: Deploy to `gh-pages` branch
+        env:
+          GIT_COMMIT_MESSAGE: "Deploy docs from main: $GITHUB_SHA"
+        run: |
+          set -euo pipefail
 
-      - name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v4
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git fetch origin
+
+          # Create or checkout gh-pages (track if exists, else orphan)
+          if git ls-remote --exit-code --heads origin gh-pages; then
+            if git show-ref --quiet refs/heads/gh-pages; then
+              git checkout gh-pages
+            else
+              git checkout --track origin/gh-pages
+            fi
+          else
+            git checkout --orphan gh-pages
+            # ensure no files remain staged from previous branch state
+            git rm -rf . || true
+          fi
+
+          # Remove all tracked files and untracked files (avoid duplicates)
+          git rm -rf . || true
+          git clean -fdx || true
+
+          # Copy only the contents of publish/ into repo root
+          if command -v rsync >/dev/null 2>&1; then
+            rsync -a --delete --no-perms --no-owner --no-group --chmod=ugo=rwX publish/ ./
+          else
+            cp -a publish/. .
+          fi
+
+          # Ensure index.html at repo root
+          if [ ! -f index.html ]; then
+            echo "Error: index.html not found at repo root after copy. Aborting."
+            exit 1
+          fi
+
+          touch .nojekyll
+
+          git add -A
+
+          if git diff --cached --quiet; then
+            echo "No changes to deploy"
+          else
+            git commit -m "$GIT_COMMIT_MESSAGE"
+            git push --force --set-upstream origin gh-pages
+          fi
