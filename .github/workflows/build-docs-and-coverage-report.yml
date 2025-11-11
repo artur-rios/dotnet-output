@@ -5,14 +5,17 @@ on:
     branches: [ main ]
     paths:
       - 'docs/**'
-  workflow_dispatch: { }
+  workflow_dispatch: {}
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 jobs:
   publish:
     runs-on: ubuntu-latest
+    environment: github-pages
 
     steps:
       - name: Checkout
@@ -48,11 +51,10 @@ jobs:
           mkdir -p publish
           hugo --source docs --destination publish
 
-      - name: Merge prebuilt `docs/coverage-report` into `publish/coverage-report` (once)
+      - name: Merge prebuilt `docs/coverage-report` into `publish/coverage-report`
         run: |
           if [ -d "docs/coverage-report" ]; then
             mkdir -p publish/coverage-report
-            # sync contents (overwrite if present) — copies only once into publish
             rsync -a --delete docs/coverage-report/ publish/coverage-report/
           else
             echo "No docs/coverage-report found; skipping copy"
@@ -60,53 +62,22 @@ jobs:
 
       - name: Show prepared publish files
         run: |
-          echo "Files prepared for gh-pages (max depth 5):"
+          echo "Files prepared for pages (max depth 5):"
           find publish -maxdepth 5 -type f -print || true
 
-      - name: Publish to `gh-pages` branch
-        env:
-          GIT_COMMIT_MESSAGE: "Deploy docs from main: $GITHUB_SHA"
+      - name: Ensure `index.html` and create `.nojekyll`
         run: |
-          set -euo pipefail
-
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          git fetch origin
-
-          if git ls-remote --exit-code --heads origin gh-pages; then
-            if git show-ref --quiet refs/heads/gh-pages; then
-              git checkout gh-pages
-            else
-              git checkout --track origin/gh-pages
-            fi
-          else
-            git checkout --orphan gh-pages
-          fi
-
-          git rm -rf . || true
-          git clean -fdx || true
-
-          # Prefer rsync but avoid preserving owner/attrs that can cause code 23
-          if command -v rsync >/dev/null 2>&1; then
-            rsync -av --delete --no-perms --no-owner --no-group --chmod=ugo=rwX publish/ ./
-          else
-            # fallback to cp if rsync not available
-            cp -a publish/. .
-          fi
-
-          if [ ! -f index.html ]; then
+          if [ ! -f publish/index.html ]; then
             echo "Error: publish/index.html not found. Aborting deploy."
             exit 1
           fi
+          # prevent Jekyll processing
+          touch publish/.nojekyll
 
-          touch .nojekyll
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: publish
 
-          git add -A
-
-          if git diff --cached --quiet; then
-            echo "No changes to deploy"
-          else
-            git commit -m "$GIT_COMMIT_MESSAGE"
-            git push --force --set-upstream origin gh-pages
-          fi
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
