@@ -38,20 +38,19 @@ jobs:
           HUGO_ENV: production
         run: |
           set -e
-          cd docs
-          rm -rf publish public
-          hugo
-          echo "After build, contents:"
-          ls -la .
-          echo "docs/publish listing (if exists):"
-          [ -d publish ] && ls -la publish || echo "docs/publish missing"
-          echo "docs/public listing (if exists):"
-          [ -d public ] && ls -la public || echo "docs/public missing"
+            cd docs
+            rm -rf publish public
+            hugo
+            echo "After build, contents:"
+            ls -la .
+            echo "docs/publish listing (if exists):"
+            [ -d publish ] && ls -la publish || echo "docs/publish missing"
+            echo "docs/public listing (if exists):"
+            [ -d public ] && ls -la public || echo "docs/public missing"
 
       - name: Merge coverage-report into built site
         run: |
           set -e
-          # Determine built site dir (prefer docs/publish then docs/public)
           if [ -f docs/publish/index.html ]; then
             SITE_DIR="docs/publish"
           elif [ -f docs/public/index.html ]; then
@@ -78,6 +77,8 @@ jobs:
           GIT_COMMIT_MESSAGE: "Deploy docs from main: $GITHUB_SHA"
         run: |
           set -euo pipefail
+          [ -d .git ] || { echo ".git missing before deploy"; exit 1; }
+
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git fetch origin
@@ -95,10 +96,12 @@ jobs:
           git rm -rf . || true
           git clean -fdx || true
 
-          rsync -a --delete /tmp/publish_copy/ ./
+          # Copy WITHOUT --delete so .git stays intact
+          rsync -a /tmp/publish_copy/ ./
           touch .nojekyll
 
           [ -f index.html ] || { echo "index.html missing at repo root"; ls -la; exit 1; }
+          [ -d .git ] || { echo ".git missing after rsync"; exit 1; }
 
           git add -A
           echo "Staged files:"
