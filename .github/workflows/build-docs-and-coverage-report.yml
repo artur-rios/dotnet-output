@@ -67,41 +67,39 @@ jobs:
         env:
           GIT_COMMIT_MESSAGE: "Deploy docs from main: $GITHUB_SHA"
         run: |
-          set -e
+          set -euo pipefail
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          # Ensure remote info is up to date
           git fetch origin
 
-          # Create or switch to gh-pages branch
           if git ls-remote --exit-code --heads origin gh-pages; then
-            # Create a local tracking branch (or switch to it)
             if git show-ref --quiet refs/heads/gh-pages; then
               git checkout gh-pages
             else
               git checkout --track origin/gh-pages
             fi
           else
-            # create orphan branch if gh-pages doesn't exist yet
             git checkout --orphan gh-pages
           fi
 
-          # Remove all tracked and untracked files to avoid duplicates (including leftover `docs`)
           git rm -rf . || true
           git clean -fdx || true
 
-          # Copy only the *contents* of publish into the repo root (preserves root index.html)
-          rsync -a --delete publish/ ./
+          # Prefer rsync but avoid preserving owner/attrs that can cause code 23
+          if command -v rsync >/dev/null 2>&1; then
+            rsync -av --delete --no-perms --no-owner --no-group --chmod=ugo=rwX publish/ ./
+          else
+            # fallback to cp if rsync not available
+            cp -a publish/. .
+          fi
 
-          # Ensure index.html exists at repo root (fail if site build missing)
           if [ ! -f index.html ]; then
             echo "Error: publish/index.html not found. Aborting deploy."
             exit 1
           fi
 
-          # prevent Jekyll processing
           touch .nojekyll
 
           git add -A
