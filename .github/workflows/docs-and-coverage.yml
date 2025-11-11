@@ -5,7 +5,7 @@ on:
     branches: [ main ]
     paths:
       - 'docs/**'
-  workflow_dispatch: { }
+  workflow_dispatch: {}
 
 permissions:
   contents: write
@@ -25,8 +25,24 @@ jobs:
       - name: Set up Hugo
         uses: peaceiris/actions-hugo@v2
         with:
-          hugo-version: '0.115.0'
+          hugo-version: '0.152.2'
           extended: true
+
+      - name: Diagnose Hugo modules (show required version)
+        run: |
+          cd docs
+          echo "=== hugo version ==="
+          hugo version || true
+          echo "=== hugo mod graph ==="
+          hugo mod graph || true
+          echo "=== go env ==="
+          go env || true
+
+      - name: Ensure Hugo modules are fetched
+        run: |
+          cd docs
+          hugo mod get -u || true
+          hugo mod tidy || true
 
       - name: Build Hugo site from `docs`
         env:
