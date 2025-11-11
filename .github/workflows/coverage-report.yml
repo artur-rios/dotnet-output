@@ -5,11 +5,12 @@ on:
     branches: [ main ]
     paths:
       - '**/TestReports/**'
-  workflow_dispatch: {}
+  workflow_dispatch: { }
 
 permissions:
   contents: write
   pages: write
+  id-token: write
 
 jobs:
   publish:
@@ -73,10 +74,10 @@ jobs:
 
       - name: Upload Pages artifact
         if: steps.prepare.outputs.publish_path != ''
-        uses: actions/upload-pages-artifact@v2
+        uses: actions/upload-pages-artifact@v3
         with:
           path: ${{ steps.prepare.outputs.publish_path }}
 
       - name: Deploy to GitHub Pages
         if: steps.prepare.outputs.publish_path != ''
-        uses: actions/deploy-pages@v2
+        uses: actions/deploy-pages@v4
