@@ -1,21 +1,18 @@
-﻿name: Publish Docs & Coverage
+﻿name: Build Docs & Coverage Report
 
 on:
   push:
     branches: [ main ]
     paths:
       - 'docs/**'
-  workflow_dispatch: {}
+  workflow_dispatch: { }
 
 permissions:
   contents: write
-  pages: write
-  id-token: write
 
 jobs:
   publish:
     runs-on: ubuntu-latest
-    environment: github-pages
 
     steps:
       - name: Checkout
@@ -30,14 +27,11 @@ jobs:
           hugo-version: '0.152.2'
           extended: true
 
-      - name: Diagnose Hugo modules (show required version)
+      - name: Diagnose Hugo modules
         run: |
           cd docs
-          echo "=== hugo version ==="
           hugo version || true
-          echo "=== hugo mod graph ==="
           hugo mod graph || true
-          echo "=== go env ==="
           go env || true
 
       - name: Ensure Hugo modules are fetched
@@ -63,15 +57,38 @@ jobs:
             echo "No docs/coverage-report found; skipping copy"
           fi
 
-      - name: Debug - show prepared publish files
+      - name: Show prepared publish files
         run: |
-          echo "Files prepared for publish (max depth 5):"
+          echo "Files prepared for gh-pages (max depth 5):"
           find publish -maxdepth 5 -type f -print || true
 
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: publish
+      - name: Publish to `gh-pages` branch
+        env:
+          GIT_COMMIT_MESSAGE: "Deploy docs from main: $GITHUB_SHA"
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      - name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v4
+          # create or switch to gh-pages (orphan if not exists)
+          if git ls-remote --exit-code --heads origin gh-pages; then
+            git checkout gh-pages
+            git rm -rf . || true
+          else
+            git checkout --orphan gh-pages
+            git rm -rf . || true
+          fi
+
+          # copy built site into repo root
+          cp -a publish/. .
+
+          # prevent Jekyll processing
+          touch .nojekyll
+
+          git add -A
+
+          if git diff --cached --quiet; then
+            echo "No changes to deploy"
+          else
+            git commit -m "$GIT_COMMIT_MESSAGE"
+            git push --force --set-upstream origin gh-pages
+          fi
