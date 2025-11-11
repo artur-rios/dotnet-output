@@ -113,13 +113,46 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          # Preserve the generated site (copy contents of publish into /tmp/publish_copy)
+          # Prepare preserved site copy directory
           rm -rf /tmp/publish_copy || true
           mkdir -p /tmp/publish_copy
-          if command -v rsync >/dev/null 2>&1; then
-            rsync -a --delete publish/ /tmp/publish_copy/
+
+          # Choose the real generated site directory:
+          # 1) prefer `publish` if it contains an index.html at top level
+          # 2) else prefer `docs/public` (common Hugo default)
+          # 3) else fallback to `publish` if it has files
+          if [ -f publish/index.html ]; then
+            echo "Using `publish` as source (found publish/index.html)"
+            SRC_DIR="publish"
+          elif [ -f docs/public/index.html ]; then
+            echo "Using `docs/public` as source (found docs/public/index.html)"
+            SRC_DIR="docs/public"
+          elif [ "$(find publish -type f | wc -l)" -gt 0 ]; then
+            echo "No top-level index.html, but `publish` has files; using `publish`"
+            SRC_DIR="publish"
           else
-            cp -a publish/. /tmp/publish_copy/
+            echo "No generated site found in `publish` or `docs/public`. Aborting."
+            exit 1
+          fi
+
+          # Copy contents (not the directory itself) into the preserved location
+          if command -v rsync >/dev/null 2>&1; then
+            rsync -a --delete "${SRC_DIR}/" /tmp/publish_copy/
+          else
+            cp -a "${SRC_DIR}/." /tmp/publish_copy/
+          fi
+
+          # Always merge docs/coverage-report into the preserved copy (overwrites existing)
+          if [ -d "docs/coverage-report" ]; then
+            echo "Merging `docs/coverage-report` into /tmp/publish_copy/coverage-report"
+            mkdir -p /tmp/publish_copy/coverage-report
+            if command -v rsync >/dev/null 2>&1; then
+              rsync -a --delete docs/coverage-report/ /tmp/publish_copy/coverage-report/
+            else
+              rm -rf /tmp/publish_copy/coverage-report || true
+              mkdir -p /tmp/publish_copy/coverage-report
+              cp -a docs/coverage-report/. /tmp/publish_copy/coverage-report/
+            fi
           fi
 
           git fetch origin
@@ -145,7 +178,7 @@ jobs:
             exit 1
           fi
 
-          # Copy the preserved site contents into repo root (places index.html at repo root and includes coverage-report)
+          # Copy preserved site contents into repo root (places index.html at repo root and includes coverage-report)
           if command -v rsync >/dev/null 2>&1; then
             rsync -a --delete --no-perms --no-owner --no-group --chmod=ugo=rwX /tmp/publish_copy/ ./
           else
