@@ -85,7 +85,6 @@ jobs:
           if command -v rsync >/dev/null 2>&1; then
             rsync -a --delete publish/ /tmp/publish_copy/
           else
-            # cp fallback: copy contents, not the directory itself
             cp -a publish/. /tmp/publish_copy/
           fi
 
@@ -116,7 +115,6 @@ jobs:
           if command -v rsync >/dev/null 2>&1; then
             rsync -a --delete --no-perms --no-owner --no-group --chmod=ugo=rwX /tmp/publish_copy/ ./
           else
-            # cp fallback: copy contents
             cp -a /tmp/publish_copy/. .
           fi
 
@@ -128,11 +126,29 @@ jobs:
 
           touch .nojekyll
 
+          # Stage everything and show diagnostics
           git add -A
+          echo "Repository root listing:"
+          ls -la
+          echo "Staged files (for commit):"
+          git --no-pager diff --cached --name-only || true
 
-          if git diff --cached --quiet; then
-            echo "No changes to deploy"
-          else
+          STAGED_COUNT=$(git diff --cached --name-only | wc -l)
+
+          # If this branch has no commits yet, ensure we create an initial commit when files are staged.
+          if ! git rev-parse --verify HEAD >/dev/null 2>&1; then
+            echo "Branch has no HEAD (initial commit scenario)."
+            # If nothing staged yet, ensure at least .nojekyll is staged
+            if [ "$STAGED_COUNT" -eq 0 ]; then
+              echo "Nothing staged yet, forcing add of .nojekyll to create initial commit"
+              git add .nojekyll || true
+              STAGED_COUNT=$(git diff --cached --name-only | wc -l)
+            fi
+          fi
+
+          if [ "$STAGED_COUNT" -gt 0 ]; then
             git commit -m "$GIT_COMMIT_MESSAGE"
             git push --force --set-upstream origin gh-pages
+          else
+            echo "No changes to deploy (staged_count=$STAGED_COUNT)"
           fi
