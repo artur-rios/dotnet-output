@@ -13,7 +13,6 @@ permissions:
 jobs:
   publish:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -34,130 +33,55 @@ jobs:
           hugo mod graph || true
           go env || true
 
-      - name: Ensure Hugo modules are fetched
-        run: |
-          cd docs
-          hugo mod get -u || true
-          hugo mod tidy || true
-
-      - name: Build Hugo site from `docs`
+      - name: Build Hugo site
         env:
           HUGO_ENV: production
         run: |
-          rm -rf publish
-          mkdir -p publish
-          hugo --source docs --destination publish
+          set -e
+          cd docs
+          rm -rf publish public
+          hugo
+          echo "After build, contents:"
+          ls -la .
+          echo "docs/publish listing (if exists):"
+          [ -d publish ] && ls -la publish || echo "docs/publish missing"
+          echo "docs/public listing (if exists):"
+          [ -d public ] && ls -la public || echo "docs/public missing"
 
-      - name: Merge prebuilt `docs/coverage-report` into `publish/coverage-report`
+      - name: Merge coverage-report into built site
         run: |
-          if [ -d "docs/coverage-report" ]; then
-            mkdir -p publish/coverage-report
-            rsync -a --delete docs/coverage-report/ publish/coverage-report/
+          set -e
+          # Determine built site dir (prefer docs/publish then docs/public)
+          if [ -f docs/publish/index.html ]; then
+            SITE_DIR="docs/publish"
+          elif [ -f docs/public/index.html ]; then
+            SITE_DIR="docs/public"
           else
-            echo "No docs/coverage-report found; skipping copy"
-          fi
-
-      - name: Show prepared publish files
-        run: |
-          set -euo pipefail
-
-          echo "=== publish directory size ==="
-          du -sh publish || true
-
-          echo "=== publish top-level listing ==="
-          ls -la publish || true
-
-          echo "=== publish file tree (max depth 5) ==="
-          find publish -maxdepth 5 -type f -print || true
-
-          echo "=== Top-level entries and a small sample of their contents ==="
-          for p in publish/*; do
-            echo "---- $p ----"
-            if [ -d "$p" ]; then
-              echo "Directory listing (first 50 lines):"
-              ls -la "$p" | head -n 50 || true
-            else
-              echo "File info:"
-              ls -la "$p" || true
-            fi
-          done || true
-
-          echo "=== Check for publish/index.html ==="
-          if [ -f publish/index.html ]; then
-            echo "FOUND: publish/index.html"
-          else
-            echo "MISSING: publish/index.html"
-          fi
-
-          echo "=== Source docs top-level (to confirm source files exist) ==="
-          ls -la docs || true
-
-          echo "=== Summary: counts ==="
-          echo "Files in publish (recursively):"
-          find publish -type f | wc -l || true
-
-      - name: Ensure `publish/index.html` and create `.nojekyll`
-        run: |
-          if [ ! -f publish/index.html ]; then
-            echo "Error: publish/index.html not found. Aborting deploy."
+            echo "No index.html in docs/publish or docs/public. Aborting."
+            find docs -maxdepth 3 -type f -name index.html || true
             exit 1
           fi
-          touch publish/.nojekyll
+          echo "Using site dir: $SITE_DIR"
+          mkdir -p /tmp/publish_copy
+          rsync -a --delete "$SITE_DIR/"/ /tmp/publish_copy/
+          if [ -d "docs/coverage-report" ]; then
+            echo "Merging coverage-report"
+            mkdir -p /tmp/publish_copy/coverage-report
+            rsync -a --delete docs/coverage-report/ /tmp/publish_copy/coverage-report/
+          fi
+          echo "Resulting preserved copy:"
+          find /tmp/publish_copy -maxdepth 3 -type f | head -n 50
+          [ -f /tmp/publish_copy/index.html ] || { echo "Missing /tmp/publish_copy/index.html"; exit 1; }
 
-      - name: Deploy to `gh-pages` branch (clear previous files and replace with publish)
+      - name: Deploy to gh-pages
         env:
           GIT_COMMIT_MESSAGE: "Deploy docs from main: $GITHUB_SHA"
         run: |
           set -euo pipefail
-
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          # Prepare preserved site copy directory
-          rm -rf /tmp/publish_copy || true
-          mkdir -p /tmp/publish_copy
-
-          # Choose the real generated site directory:
-          # 1) prefer `publish` if it contains an index.html at top level
-          # 2) else prefer `docs/public` (common Hugo default)
-          # 3) else fallback to `publish` if it has files
-          if [ -f publish/index.html ]; then
-            echo "Using `publish` as source (found publish/index.html)"
-            SRC_DIR="publish"
-          elif [ -f docs/public/index.html ]; then
-            echo "Using `docs/public` as source (found docs/public/index.html)"
-            SRC_DIR="docs/public"
-          elif [ "$(find publish -type f | wc -l)" -gt 0 ]; then
-            echo "No top-level index.html, but `publish` has files; using `publish`"
-            SRC_DIR="publish"
-          else
-            echo "No generated site found in `publish` or `docs/public`. Aborting."
-            exit 1
-          fi
-
-          # Copy contents (not the directory itself) into the preserved location
-          if command -v rsync >/dev/null 2>&1; then
-            rsync -a --delete "${SRC_DIR}/" /tmp/publish_copy/
-          else
-            cp -a "${SRC_DIR}/." /tmp/publish_copy/
-          fi
-
-          # Always merge docs/coverage-report into the preserved copy (overwrites existing)
-          if [ -d "docs/coverage-report" ]; then
-            echo "Merging `docs/coverage-report` into /tmp/publish_copy/coverage-report"
-            mkdir -p /tmp/publish_copy/coverage-report
-            if command -v rsync >/dev/null 2>&1; then
-              rsync -a --delete docs/coverage-report/ /tmp/publish_copy/coverage-report/
-            else
-              rm -rf /tmp/publish_copy/coverage-report || true
-              mkdir -p /tmp/publish_copy/coverage-report
-              cp -a docs/coverage-report/. /tmp/publish_copy/coverage-report/
-            fi
-          fi
-
           git fetch origin
 
-          # Create or switch to gh-pages branch (track if exists, else orphan)
           if git ls-remote --exit-code --heads origin gh-pages; then
             if git show-ref --quiet refs/heads/gh-pages; then
               git checkout gh-pages
@@ -168,54 +92,26 @@ jobs:
             git checkout --orphan gh-pages
           fi
 
-          # Remove all tracked files and fully clean working tree to ensure previous files are gone
           git rm -rf . || true
           git clean -fdx || true
 
-          # Ensure preserved site exists
-          if [ ! -d "/tmp/publish_copy" ]; then
-            echo "Error: preserved publish copy not found at /tmp/publish_copy. Aborting."
-            exit 1
-          fi
-
-          # Copy preserved site contents into repo root (places index.html at repo root and includes coverage-report)
-          if command -v rsync >/dev/null 2>&1; then
-            rsync -a --delete --no-perms --no-owner --no-group --chmod=ugo=rwX /tmp/publish_copy/ ./
-          else
-            cp -a /tmp/publish_copy/. .
-          fi
-
-          # Verify index.html exists at repo root
-          if [ ! -f index.html ]; then
-            echo "Error: index.html not found at repo root after copy. Aborting."
-            exit 1
-          fi
-
+          rsync -a --delete /tmp/publish_copy/ ./
           touch .nojekyll
 
-          # Stage everything and show diagnostics
-          git add -A
-          echo "Repository root listing:"
-          ls -la
-          echo "Staged files (for commit):"
-          git --no-pager diff --cached --name-only || true
+          [ -f index.html ] || { echo "index.html missing at repo root"; ls -la; exit 1; }
 
+          git add -A
+          echo "Staged files:"
+          git diff --cached --name-only || true
           STAGED_COUNT=$(git diff --cached --name-only | wc -l)
 
-          # If this branch has no commits yet, ensure we create an initial commit when files are staged.
           if ! git rev-parse --verify HEAD >/dev/null 2>&1; then
-            echo "Branch has no HEAD (initial commit scenario)."
-            # If nothing staged yet, ensure at least .nojekyll is staged
-            if [ "$STAGED_COUNT" -eq 0 ]; then
-              echo "Nothing staged yet, forcing add of .nojekyll to create initial commit"
-              git add .nojekyll || true
-              STAGED_COUNT=$(git diff --cached --name-only | wc -l)
-            fi
+            echo "Initial commit on orphan branch."
           fi
 
           if [ "$STAGED_COUNT" -gt 0 ]; then
             git commit -m "$GIT_COMMIT_MESSAGE"
             git push --force --set-upstream origin gh-pages
           else
-            echo "No changes to deploy (staged_count=$STAGED_COUNT)"
-          fi
+            echo "No changes to commit."
+            exit 0
