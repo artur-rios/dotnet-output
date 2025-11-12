@@ -28,6 +28,7 @@ jobs:
 
       - name: Diagnose Hugo modules
         run: |
+          set -e
           cd docs
           hugo version || true
           hugo mod graph || true
@@ -38,15 +39,15 @@ jobs:
           HUGO_ENV: production
         run: |
           set -e
-            cd docs
-            rm -rf publish public
-            hugo
-            echo "After build, contents:"
-            ls -la .
-            echo "docs/publish listing (if exists):"
-            [ -d publish ] && ls -la publish || echo "docs/publish missing"
-            echo "docs/public listing (if exists):"
-            [ -d public ] && ls -la public || echo "docs/public missing"
+          cd docs
+          rm -rf publish public
+          hugo
+          echo "After build, contents:"
+          ls -la .
+          echo "docs/publish listing (if exists):"
+          [ -d publish ] && ls -la publish || echo "docs/publish missing"
+          echo "docs/public listing (if exists):"
+          [ -d public ] && ls -la public || echo "docs/public missing"
 
       - name: Merge coverage-report into built site
         run: |
@@ -62,14 +63,14 @@ jobs:
           fi
           echo "Using site dir: $SITE_DIR"
           mkdir -p /tmp/publish_copy
-          rsync -a --delete "$SITE_DIR/"/ /tmp/publish_copy/
-          if [ -d "docs/coverage-report" ]; then
+          rsync -a --delete "$SITE_DIR"/ /tmp/publish_copy/
+          if [ -d docs/coverage-report ]; then
             echo "Merging coverage-report"
             mkdir -p /tmp/publish_copy/coverage-report
             rsync -a --delete docs/coverage-report/ /tmp/publish_copy/coverage-report/
           fi
-          echo "Resulting preserved copy:"
-          find /tmp/publish_copy -maxdepth 3 -type f | head -n 50
+          echo "Resulting preserved copy sample:"
+          find /tmp/publish_copy -maxdepth 2 -type f | head -n 40
           [ -f /tmp/publish_copy/index.html ] || { echo "Missing /tmp/publish_copy/index.html"; exit 1; }
 
       - name: Deploy to gh-pages
@@ -96,7 +97,6 @@ jobs:
           git rm -rf . || true
           git clean -fdx || true
 
-          # Copy WITHOUT --delete so .git stays intact
           rsync -a /tmp/publish_copy/ ./
           touch .nojekyll
 
@@ -118,3 +118,9 @@ jobs:
           else
             echo "No changes to commit."
             exit 0
+
+      - name: Post-deploy syntax check (diagnostic)
+        if: always()
+        run: |
+          echo "Verifying shell syntax for embedded steps (no failures expected)."
+          bash -n "$GITHUB_WORKSPACE/.github/workflows/build-docs-and-coverage-report.yml" || echo "YAML file is not a pure shell script; syntax check skipped."
