@@ -62,16 +62,20 @@ jobs:
             exit 1
           fi
           echo "Using site dir: $SITE_DIR"
-          mkdir -p /tmp/publish_copy
-          rsync -a --delete "$SITE_DIR"/ /tmp/publish_copy/
-          if [ -d docs/coverage-report ]; then
-            echo "Merging coverage-report"
-            mkdir -p /tmp/publish_copy/coverage-report
-            rsync -a --delete docs/coverage-report/ /tmp/publish_copy/coverage-report/
-          fi
-          echo "Resulting preserved copy sample:"
-          find /tmp/publish_copy -maxdepth 2 -type f | head -n 40
-          [ -f /tmp/publish_copy/index.html ] || { echo "Missing /tmp/publish_copy/index.html"; exit 1; }
+            mkdir -p /tmp/publish_copy
+            rsync -a --delete "$SITE_DIR"/ /tmp/publish_copy/
+            if [ -d docs/coverage-report ]; then
+              echo "Merging coverage-report"
+              mkdir -p /tmp/publish_copy/coverage-report
+              rsync -a --delete docs/coverage-report/ /tmp/publish_copy/coverage-report/
+            fi
+            echo "Resulting preserved copy sample:"
+            find /tmp/publish_copy -maxdepth 2 -type f | head -n 40
+            [ -f /tmp/publish_copy/index.html ] || { echo "Missing /tmp/publish_copy/index.html"; exit 1; }
+
+      - name: (Pre-deploy) syntax presence check
+        run: |
+          test -f .github/workflows/build-docs-and-coverage-report.yml || { echo "Workflow file missing before deploy"; exit 1; }
 
       - name: Deploy to gh-pages
         env:
@@ -118,9 +122,4 @@ jobs:
           else
             echo "No changes to commit."
             exit 0
-
-      - name: Post-deploy syntax check (diagnostic)
-        if: always()
-        run: |
-          echo "Verifying shell syntax for embedded steps (no failures expected)."
-          bash -n "$GITHUB_WORKSPACE/.github/workflows/build-docs-and-coverage-report.yml" || echo "YAML file is not a pure shell script; syntax check skipped."
+          fi
