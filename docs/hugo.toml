@@ -5,3 +5,18 @@ theme = 'hugo-theme-re-terminal'
 
 [params.logo]
     logoText = 'Dotnet Output'
+
+[menu]
+  [[menu.main]]
+    identifier = "author"
+    name = "Author"
+    url = "https://www.artur-rios.tech/"
+  [[menu.main]]
+    identifier = "github"
+    name = "GitHub"
+    url = "https://github.com/artur-rios/dotnet-output"
+  [[menu.main]]
+    identifier = "test-coverage"
+    name = "Test Coverage"
+    url = "https://artur-rios.github.io/dotnet-output/coverage-report"
+
