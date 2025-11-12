@@ -1,0 +1,70 @@
+﻿name: Publish Package
+
+permissions:
+  contents: write
+  packages: write
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  generate-version:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: GitHub Tag Bump
+        id: tag_bump
+        uses: anothrNick/github-tag-action@1.71.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INITIAL_VERSION: 1.0.0
+          DEFAULT_BUMP: patch
+
+    outputs:
+      new_version: ${{ steps.tag_bump.outputs.new_tag }}
+
+  package-and-publish-lib:
+    runs-on: ubuntu-latest
+    needs: generate-version
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Generate NuGet package
+        run: |
+          VERSION=${{ needs.generate-version.outputs.new_version }}
+          VERSION=${VERSION#v}
+          echo "Packing version $VERSION"
+          dotnet pack src/ArturRios.Output.csproj \
+            --configuration Release \
+            -p:PackageVersion=$VERSION \
+            -p:RepositoryUrl=https://github.com/artur-rios/dotnet-output \
+            -o packages
+
+      - name: Publish to nuget.org
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: |
+          dotnet nuget push packages/*.nupkg \
+            --api-key $NUGET_API_KEY \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
+
+      - name: Publish to GitHub Packages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          dotnet nuget push packages/*.nupkg \
+            --api-key $GITHUB_TOKEN \
+            --source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json \
+            --skip-duplicate

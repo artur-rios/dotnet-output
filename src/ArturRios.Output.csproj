@@ -8,9 +8,9 @@
     <Authors>Artur Rios</Authors>
     <Description>A .NET helper library that standardizes process and data outputs</Description>
     <PackageTags>utilities</PackageTags>
-    <RepositoryUrl>https://github.com/your/repo</RepositoryUrl>
+    <RepositoryUrl>https://github.com/artur-rios/dotnet-output</RepositoryUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageProjectUrl>https://github.com/your/repo</PackageProjectUrl>
+    <PackageProjectUrl>https://artur-rios.github.io/dotnet-output</PackageProjectUrl>
     <IncludeSymbols>false</IncludeSymbols>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
