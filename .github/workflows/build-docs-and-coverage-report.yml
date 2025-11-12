@@ -42,14 +42,11 @@ jobs:
           cd docs
           rm -rf publish public
           hugo
-          echo "After build, contents:"
-          ls -la .
-          echo "docs/publish listing (if exists):"
+          echo "Built site directories:"
           [ -d publish ] && ls -la publish || echo "docs/publish missing"
-          echo "docs/public listing (if exists):"
           [ -d public ] && ls -la public || echo "docs/public missing"
 
-      - name: Merge coverage-report into built site
+      - name: Prepare site bundle
         run: |
           set -e
           if [ -f docs/publish/index.html ]; then
@@ -57,43 +54,36 @@ jobs:
           elif [ -f docs/public/index.html ]; then
             SITE_DIR="docs/public"
           else
-            echo "No index.html in docs/publish or docs/public. Aborting."
-            find docs -maxdepth 3 -type f -name index.html || true
+            echo "No index.html found."
+            find docs -maxdepth 3 -name index.html || true
             exit 1
           fi
           echo "Using site dir: $SITE_DIR"
-            mkdir -p /tmp/publish_copy
-            rsync -a --delete "$SITE_DIR"/ /tmp/publish_copy/
-            if [ -d docs/coverage-report ]; then
-              echo "Merging coverage-report"
-              mkdir -p /tmp/publish_copy/coverage-report
-              rsync -a --delete docs/coverage-report/ /tmp/publish_copy/coverage-report/
-            fi
-            echo "Resulting preserved copy sample:"
-            find /tmp/publish_copy -maxdepth 2 -type f | head -n 40
-            [ -f /tmp/publish_copy/index.html ] || { echo "Missing /tmp/publish_copy/index.html"; exit 1; }
+          mkdir -p /tmp/publish_copy
+          rsync -a --delete "$SITE_DIR"/ /tmp/publish_copy/
+          if [ -d docs/coverage-report ]; then
+            rsync -a --delete docs/coverage-report/ /tmp/publish_copy/coverage-report/
+          fi
+          [ -f /tmp/publish_copy/index.html ] || { echo "Missing index.html in preserved copy"; exit 1; }
+          echo "Sample of preserved copy:"
+          find /tmp/publish_copy -maxdepth 2 -type f | head -n 20
 
-      - name: (Pre-deploy) syntax presence check
+      - name: Clean repository before branch switch
         run: |
-          test -f .github/workflows/build-docs-and-coverage-report.yml || { echo "Workflow file missing before deploy"; exit 1; }
+          set -e
+          git status --short
+          git reset --hard
+          git clean -fdx
+          git status --short
 
       - name: Deploy to gh-pages
         env:
           GIT_COMMIT_MESSAGE: "Deploy docs from main: $GITHUB_SHA"
         run: |
           set -euo pipefail
-          [ -d .git ] || { echo ".git missing before deploy"; exit 1; }
-
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git fetch origin
-
           if git ls-remote --exit-code --heads origin gh-pages; then
-            if git show-ref --quiet refs/heads/gh-pages; then
-              git checkout gh-pages
-            else
-              git checkout --track origin/gh-pages
-            fi
+            git checkout gh-pages
           else
             git checkout --orphan gh-pages
           fi
@@ -104,22 +94,12 @@ jobs:
           rsync -a /tmp/publish_copy/ ./
           touch .nojekyll
 
-          [ -f index.html ] || { echo "index.html missing at repo root"; ls -la; exit 1; }
-          [ -d .git ] || { echo ".git missing after rsync"; exit 1; }
-
+          [ -f index.html ] || { echo "index.html missing at root"; ls -la; exit 1; }
           git add -A
-          echo "Staged files:"
-          git diff --cached --name-only || true
           STAGED_COUNT=$(git diff --cached --name-only | wc -l)
-
-          if ! git rev-parse --verify HEAD >/dev/null 2>&1; then
-            echo "Initial commit on orphan branch."
-          fi
-
           if [ "$STAGED_COUNT" -gt 0 ]; then
             git commit -m "$GIT_COMMIT_MESSAGE"
             git push --force --set-upstream origin gh-pages
           else
             echo "No changes to commit."
-            exit 0
           fi
