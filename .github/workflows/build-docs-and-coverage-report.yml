@@ -81,7 +81,12 @@ jobs:
           GIT_COMMIT_MESSAGE: "Deploy docs from main: $GITHUB_SHA"
         run: |
           set -euo pipefail
+          [ -d .git ] || { echo ".git missing before deploy"; exit 1; }
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git fetch origin
+
           if git ls-remote --exit-code --heads origin gh-pages; then
             git checkout gh-pages
           else
