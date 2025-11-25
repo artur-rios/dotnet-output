@@ -1,5 +1,7 @@
-﻿
-Microsoft Visual Studio Solution File, Format Version 12.00
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArturRios.Output", "ArturRios.Output.csproj", "{12D77818-DC7D-4E61-8FA0-44BA55CC2F5E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArturRios.Output.Tests", "..\tests\ArturRios.Output.Tests\ArturRios.Output.Tests.csproj", "{BB556E81-0490-4BAD-8BC1-21F30EF6B7A9}"
