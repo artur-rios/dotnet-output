@@ -188,6 +188,17 @@ classDiagram
     PaginatedOutputExtensions ..> PaginatedOutput_T: uses
 ```
 
+## Build, test and publish
+
+Use the official [.NET CLI](https://learn.microsoft.com/en-us/dotnet/core/tools/) to build, test and publish the project and Git for source control.
+If you want, optional helper toolsets I built to facilitate these tasks are available:
+
+- [Dotnet Tools](https://github.com/artur-rios/dotnet-tools)
+- [Python Dotnet Tools](https://github.com/artur-rios/dotnet-tools)
+
+Both of them are compatible with this project structure.
+Installation and usage instructions are available in their respective repositories.
+
 ## Contributing
 
 Contributions are welcome. For small fixes a PR with tests and a few usage examples is ideal.
