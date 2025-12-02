@@ -194,7 +194,7 @@ Use the official [.NET CLI](https://learn.microsoft.com/en-us/dotnet/core/tools/
 If you want, optional helper toolsets I built to facilitate these tasks are available:
 
 - [Dotnet Tools](https://github.com/artur-rios/dotnet-tools)
-- [Python Dotnet Tools](https://github.com/artur-rios/dotnet-tools)
+- [Python Dotnet Tools](https://github.com/artur-rios/python-dotnet-tools)
 
 Both of them are compatible with this project structure.
 Installation and usage instructions are available in their respective repositories.
