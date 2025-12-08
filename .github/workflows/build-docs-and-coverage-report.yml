@@ -28,7 +28,9 @@ jobs:
 
       - name: Build site
         working-directory: docs
-        run: hugo --minify
+        env:
+          HUGO_ENV: production
+        run: hugo --minify --baseURL "https://artur-rios.github.io/dotnet-output/"
 
       - name: Deploy to GitHub Pages (gh-pages branch)
         uses: peaceiris/actions-gh-pages@v3
@@ -39,4 +41,3 @@ jobs:
           # keep_files: true
           user_name: github-actions[bot]
           user_email: 41898282+github-actions[bot]@users.noreply.github.com
-
