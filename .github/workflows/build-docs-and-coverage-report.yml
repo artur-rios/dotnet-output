@@ -40,7 +40,7 @@ jobs:
         working-directory: docs
         run: hugo --environment production --minify --cleanDestinationDir --gc --baseURL "https://artur-rios.github.io/dotnet-output/"
 
-      - name: Commit built site to a fresh gh-pages branch
+      - name: Commit built site to gh-pages
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -57,39 +57,42 @@ jobs:
             exit 1
           fi
 
-          # Ensure we are on main (source branch)
-          src_branch="${GITHUB_REF_NAME}"
-          echo "Source branch: ${src_branch}"
+          # Ensure gh-pages exists on origin; create if missing
+          if git ls-remote --exit-code origin gh-pages >/dev/null 2>&1; then
+            echo "gh-pages exists on origin"
+          else
+            echo "gh-pages does not exist; creating branch"
+            git branch gh-pages || true
+            git push origin gh-pages || true
+          fi
 
-          # Fetch all and ensure gh-pages reference is up to date
-          git fetch --all --prune
+          # Prepare a worktree for gh-pages
+          git fetch --no-tags --prune origin gh-pages
+          rm -rf gh-pages || true
+          git worktree add gh-pages origin/gh-pages
 
-          # Create a fresh orphan branch for gh-pages contents
-          # Use a temp local branch to compose the commit
-          tmp_branch="gh-pages-tmp"
-          git checkout --orphan "${tmp_branch}"
+          # Clear existing contents in worktree (preserve .git)
+          find gh-pages -mindepth 1 -maxdepth 1 ! -name ".git" -exec rm -rf {} +
 
-          # Remove all files from the index and working tree
-          git rm -rf --cached . || true
-          find . -mindepth 1 -maxdepth 1 ! -name ".git" -exec rm -rf {} +
-
-          # Copy built site into working tree root
-          cp -R docs/public/. .
+          # Copy built site into worktree
+          cp -R docs/public/. gh-pages/
 
           # Prevent Jekyll processing on GitHub Pages
-          touch .nojekyll
+          touch gh-pages/.nojekyll
+
+          # Ensure no ignore rules block assets in the worktree
+          rm -f gh-pages/.gitignore || true
 
           # Write deploy info to ensure traceability
-          echo "source_sha=${GITHUB_SHA}" > .deploy-info
-          date -u +"%Y-%m-%dT%H:%M:%SZ" >> .deploy-info
+          echo "source_sha=${GITHUB_SHA}" > gh-pages/.deploy-info
+          date -u +"%Y-%m-%dT%H:%M:%SZ" >> gh-pages/.deploy-info
 
-          # Stage and commit
-          git add -A
-          git commit -m "Deploy: ${GITHUB_SHA}"
+          # Commit and push from worktree
+          cd gh-pages
+          git add -f -A
+          git commit -m "Deploy: ${GITHUB_SHA}" || git commit --allow-empty -m "Deploy (empty): ${GITHUB_SHA}"
+          git push origin HEAD:gh-pages
 
-          # Force-push the temp branch to gh-pages
-          git push -f origin "${tmp_branch}:gh-pages"
-
-          # Return to source branch and delete temp branch
-          git checkout "${src_branch}"
-          git branch -D "${tmp_branch}" || true
+          # Cleanup
+          cd -
+          git worktree remove gh-pages --force
