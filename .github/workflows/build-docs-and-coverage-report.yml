@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   build-and-deploy:
-    name: Build and Deploy
+    name: Build and Commit to gh-pages
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -32,12 +32,49 @@ jobs:
           HUGO_ENV: production
         run: hugo --minify --baseURL "https://artur-rios.github.io/dotnet-output/"
 
-      - name: Deploy to GitHub Pages (gh-pages branch)
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: docs/public
-          allow_empty: true
-          commit_message: "Deploy: ${{ github.sha }}"
-          user_name: github-actions[bot]
-          user_email: 41898282+github-actions[bot]@users.noreply.github.com
+      - name: Commit built site to gh-pages via git
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Ensure we have gh-pages branch locally; create if missing
+          if git ls-remote --exit-code origin gh-pages >/dev/null 2>&1; then
+            echo "gh-pages exists on origin"
+          else
+            echo "gh-pages does not exist; creating orphan branch"
+            git checkout --orphan gh-pages
+            rm -rf .
+            echo "Initializing gh-pages" > README.md
+            git add -A
+            git commit -m "Initialize gh-pages"
+            git push origin gh-pages
+            git checkout -
+          fi
+
+          # Prepare a worktree for gh-pages
+          git fetch --no-tags --prune origin gh-pages
+          rm -rf gh-pages || true
+          git worktree add gh-pages origin/gh-pages
+
+          # Clear existing contents (preserve .git in worktree)
+          find gh-pages -mindepth 1 -maxdepth 1 ! -name ".git" -exec rm -rf {} +
+
+          # Copy built site
+          cp -R docs/public/. gh-pages/
+
+          # Write deploy info to ensure a diff and traceability
+          echo "source_sha=${GITHUB_SHA}" > gh-pages/.deploy-info
+          date -u +"%Y-%m-%dT%H:%M:%SZ" >> gh-pages/.deploy-info
+
+          # Commit and push
+          cd gh-pages
+          git add -A
+          git commit -m "Deploy: ${GITHUB_SHA}" || echo "No changes to commit, creating empty commit" && git commit --allow-empty -m "Deploy (empty): ${GITHUB_SHA}"
+          git push origin HEAD:gh-pages
+
+          # Cleanup
+          cd -
+          git worktree remove gh-pages --force
