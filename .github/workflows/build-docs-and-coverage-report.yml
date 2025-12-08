@@ -32,11 +32,13 @@ jobs:
           hugo-version: 'latest'
           extended: true
 
+      - name: Clean Hugo generated resources
+        run: |
+          rm -rf docs/resources/_gen || true
+
       - name: Build site
         working-directory: docs
-        env:
-          HUGO_ENV: production
-        run: hugo --minify --cleanDestinationDir --baseURL "https://artur-rios.github.io/dotnet-output/"
+        run: hugo --environment production --minify --cleanDestinationDir --gc --baseURL "https://artur-rios.github.io/dotnet-output/"
 
       - name: Commit built site to gh-pages via git
         env:
