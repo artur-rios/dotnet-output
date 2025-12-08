@@ -48,6 +48,15 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
+          # Ensure build output exists
+          if [ ! -d "docs/public" ]; then
+            echo "Build output directory docs/public not found."
+            echo "Hugo version:" && hugo version || true
+            echo "Listing docs directory:" && ls -la docs || true
+            echo "Listing docs/public (expected to exist):" && ls -la docs/public || true
+            exit 1
+          fi
+
           # Ensure we are on main (source branch)
           src_branch="${GITHUB_REF_NAME}"
           echo "Source branch: ${src_branch}"
