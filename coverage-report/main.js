@@ -213,11 +213,11 @@ var assemblies = [
   {
     "name": "ArturRios.Output",
     "classes": [
-      { "name": "ArturRios.Output.CustomException", "rp": "ArturRios.Output_CustomException.html", "cl": 2, "ucl": 0, "cal": 2, "tl": 13, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
-      { "name": "ArturRios.Output.DataOutput<T>", "rp": "ArturRios.Output_DataOutput_1.html", "cl": 25, "ucl": 0, "cal": 25, "tl": 83, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
-      { "name": "ArturRios.Output.PaginatedOutput<T>", "rp": "ArturRios.Output_PaginatedOutput_1.html", "cl": 47, "ucl": 0, "cal": 47, "tl": 149, "cb": 5, "tb": 8, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
-      { "name": "ArturRios.Output.PaginatedOutputExtensions", "rp": "ArturRios.Output_PaginatedOutputExtensions.html", "cl": 54, "ucl": 3, "cal": 57, "tl": 130, "cb": 17, "tb": 22, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
-      { "name": "ArturRios.Output.ProcessOutput", "rp": "ArturRios.Output_ProcessOutput.html", "cl": 35, "ucl": 0, "cal": 35, "tl": 125, "cb": 4, "tb": 4, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
+      { "name": "ArturRios.Output.CustomException", "rp": "ArturRios.Output_CustomException.html", "cl": 2, "ucl": 0, "cal": 2, "tl": 13, "cb": 0, "tb": 0, "cm": 2, "fcm": 2, "tm": 2, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { "crp": 1,  "cc": 1,  "cov": 100,  "bcov": 100 } },
+      { "name": "ArturRios.Output.DataOutput<T>", "rp": "ArturRios.Output_DataOutput_1.html", "cl": 25, "ucl": 0, "cal": 25, "tl": 83, "cb": 0, "tb": 0, "cm": 8, "fcm": 3, "tm": 8, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { "crp": 1,  "cc": 1,  "cov": 100,  "bcov": 100 } },
+      { "name": "ArturRios.Output.PaginatedOutput<T>", "rp": "ArturRios.Output_PaginatedOutput_1.html", "cl": 47, "ucl": 0, "cal": 47, "tl": 149, "cb": 5, "tb": 8, "cm": 15, "fcm": 5, "tm": 15, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { "crp": 2,  "cc": 2,  "cov": 100,  "bcov": 50.0 } },
+      { "name": "ArturRios.Output.PaginatedOutputExtensions", "rp": "ArturRios.Output_PaginatedOutputExtensions.html", "cl": 54, "ucl": 3, "cal": 57, "tl": 130, "cb": 17, "tb": 22, "cm": 3, "fcm": 0, "tm": 3, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { "crp": 8,  "cc": 8,  "cov": 86.95,  "bcov": 62.50 } },
+      { "name": "ArturRios.Output.ProcessOutput", "rp": "ArturRios.Output_ProcessOutput.html", "cl": 35, "ucl": 0, "cal": 35, "tl": 125, "cb": 4, "tb": 4, "cm": 13, "fcm": 7, "tm": 13, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { "crp": 2,  "cc": 2,  "cov": 100,  "bcov": 100 } },
     ]},
 ];
 
@@ -232,7 +232,7 @@ var riskHotspots = [
 ];
 
 var branchCoverageAvailable = true;
-var methodCoverageAvailable = false;
+var methodCoverageAvailable = true;
 var maximumDecimalPlacesForCoverageQuotas = 1;
 
 
