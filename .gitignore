@@ -476,6 +476,6 @@ Doxygen/
 *.asta.lock
 
 # Hugo build output
-/public/
-/resources/_gen/
+/docs/public/
+/docs/resources/_gen/
 *.DS_Store
