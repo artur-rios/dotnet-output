@@ -2,123 +2,41 @@
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
     paths:
       - 'docs/**'
-  workflow_dispatch: { }
 
 permissions:
   contents: write
 
 jobs:
-  publish:
+  build-and-deploy:
+    name: Build and Deploy
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          persist-credentials: true
           fetch-depth: 0
 
-      - name: Set up Hugo
+      - name: Setup Hugo
         uses: peaceiris/actions-hugo@v2
         with:
-          hugo-version: '0.152.2'
+          hugo-version: 'latest'
           extended: true
 
-      - name: Diagnose Hugo modules
-        run: |
-          set -e
-          cd docs
-          hugo version || true
-          hugo mod graph || true
-          go env || true
+      - name: Build site
+        working-directory: docs
+        run: hugo --minify
 
-      - name: Build Hugo site
-        env:
-          HUGO_ENV: production
-        run: |
-          set -e
-          cd docs
-          rm -rf publish public
-          echo "Hugo version:"
-          hugo version || true
-          echo "Building site to explicit destination: docs/public"
-          hugo --destination ./public
-          echo "Built site directories (root of docs):"
-          [ -d publish ] && { echo "docs/publish contents:"; ls -la publish; } || echo "docs/publish missing"
-          [ -d public ] && { echo "docs/public contents (top-level):"; ls -la public; } || echo "docs/public missing"
-          echo "Check for index.html in docs/public:"
-          if [ -f public/index.html ]; then
-            echo "Found docs/public/index.html"
-          else
-            echo "ERROR: docs/public/index.html not found after build"
-            echo "Listing up to 50 files under docs/public for diagnostics:"
-            [ -d public ] && find public -maxdepth 3 -type f | head -n 50 || true
-            echo "Listing theme directory for diagnostics:"
-            [ -d themes ] && ls -la themes || echo "docs/themes missing"
-            exit 1
-          fi
+      - name: Deploy to GitHub Pages (gh-pages branch)
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: docs/public
+          # Optional settings below; keep or adjust as needed
+          # keep_files: true
+          user_name: github-actions[bot]
+          user_email: 41898282+github-actions[bot]@users.noreply.github.com
 
-      - name: Prepare site bundle
-        run: |
-          set -e
-          if [ -f docs/publish/index.html ]; then
-            SITE_DIR="docs/publish"
-          elif [ -f docs/public/index.html ]; then
-            SITE_DIR="docs/public"
-          else
-            echo "No index.html found."
-            find docs -maxdepth 3 -name index.html || true
-            exit 1
-          fi
-          echo "Using site dir: $SITE_DIR"
-          mkdir -p /tmp/publish_copy
-          rsync -a --delete "$SITE_DIR"/ /tmp/publish_copy/
-          if [ -d docs/coverage-report ]; then
-            rsync -a --delete docs/coverage-report/ /tmp/publish_copy/coverage-report/
-          fi
-          [ -f /tmp/publish_copy/index.html ] || { echo "Missing index.html in preserved copy"; exit 1; }
-          echo "Sample of preserved copy:"
-          find /tmp/publish_copy -maxdepth 2 -type f | head -n 20
-
-      - name: Clean repository before branch switch
-        run: |
-          set -e
-          git status --short
-          git reset --hard
-          git clean -fdx
-          git status --short
-
-      - name: Deploy to gh-pages
-        env:
-          GIT_COMMIT_MESSAGE: "Deploy docs from main: $GITHUB_SHA"
-        run: |
-          set -euo pipefail
-          [ -d .git ] || { echo ".git missing before deploy"; exit 1; }
-
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git fetch origin
-
-          if git ls-remote --exit-code --heads origin gh-pages; then
-            git checkout gh-pages
-          else
-            git checkout --orphan gh-pages
-          fi
-
-          git rm -rf . || true
-          git clean -fdx || true
-
-          rsync -a /tmp/publish_copy/ ./
-          touch .nojekyll
-
-          [ -f index.html ] || { echo "index.html missing at root"; ls -la; exit 1; }
-          git add -A
-          STAGED_COUNT=$(git diff --cached --name-only | wc -l)
-          if [ "$STAGED_COUNT" -gt 0 ]; then
-            git commit -m "$GIT_COMMIT_MESSAGE"
-            git push --force --set-upstream origin gh-pages
-          else
-            echo "No changes to commit."
-          fi
