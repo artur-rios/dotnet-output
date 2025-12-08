@@ -7,11 +7,11 @@ includes IQueryable pagination extension methods (synchronous & asynchronous).
 
 - Project overview
 - Classes
-    - `ProcessOutput`
-    - `DataOutput`
-    - `PaginatedOutput`
-    - `CustomException`
-    - `PaginatedOutputExtensions` (extension methods)
+  - `ProcessOutput`
+  - `DataOutput`
+  - `PaginatedOutput`
+  - `CustomException`
+  - `PaginatedOutputExtensions` (extension methods)
 - Usage examples
 - Add as a Git submodule and reference
 - Mermaid class diagram
@@ -35,52 +35,52 @@ don't).
 ## Classes
 
 - `ProcessOutput`
-    - Purpose: Base container for operation results. Captures messages, errors, timestamp and a convenience `Success`
+  - Purpose: Base container for operation results. Captures messages, errors, timestamp and a convenience `Success`
       flag.
-    - Key members:
-        - `List<string> Messages { get; }`
-        - `List<string> Errors { get; }`
-        - `DateTime Timestamp { get; }` (UTC)
-        - `bool Success { get; }` (true when no errors)
-        - Fluent helpers: `WithError`, `WithErrors`, `WithMessage`, `WithMessages`
-        - Add helpers: `AddError`, `AddErrors`, `AddMessage`, `AddMessages`
-        - Static factory: `ProcessOutput.New`
+  - Key members:
+    - `List<string> Messages { get; }`
+    - `List<string> Errors { get; }`
+    - `DateTime Timestamp { get; }` (UTC)
+    - `bool Success { get; }` (true when no errors)
+    - Fluent helpers: `WithError`, `WithErrors`, `WithMessage`, `WithMessages`
+    - Add helpers: `AddError`, `AddErrors`, `AddMessage`, `AddMessages`
+    - Static factory: `ProcessOutput.New`
 
 - `DataOutput<T>` : `ProcessOutput`
-    - Purpose: Holds a typed data payload plus everything `ProcessOutput` provides.
-    - Key members:
-        - `T? Data { get; protected set; }`
-        - Fluent API: `WithData(T)`, `WithError(string)`, `WithErrors(IEnumerable<string>)`,
+  - Purpose: Holds a typed data payload plus everything `ProcessOutput` provides.
+  - Key members:
+    - `T? Data { get; protected set; }`
+    - Fluent API: `WithData(T)`, `WithError(string)`, `WithErrors(IEnumerable<string>)`,
           `WithMessage(string)`, `WithMessages(IEnumerable<string>)`
-        - Static factory: `DataOutput<T>.New`
+    - Static factory: `DataOutput<T>.New`
 
 - `PaginatedOutput<T>` : `DataOutput<List<T>>`
-    - Purpose: Represents a paginated result set containing `List<T>` as the payload.
-    - Key members:
-        - `int PageNumber { get; set; }`
-        - `int PageSize { get; }` (derived from Data?.Count)
-        - `int TotalItems { get; set; }`
-        - `int TotalPages { get; }` (computed as Ceil(TotalItems / PageSize))
-        - Helpers to build: `WithPagination(int pageNumber, int totalItems)`, `WithData(List<T>)`, `WithData(T)`,
+  - Purpose: Represents a paginated result set containing `List<T>` as the payload.
+  - Key members:
+    - `int PageNumber { get; set; }`
+    - `int PageSize { get; }` (derived from Data?.Count)
+    - `int TotalItems { get; set; }`
+    - `int TotalPages { get; }` (computed as Ceil(TotalItems / PageSize))
+    - Helpers to build: `WithPagination(int pageNumber, int totalItems)`, `WithData(List<T>)`, `WithData(T)`,
           `WithEmptyData()`, `AddItem(T)`, `AddItems(IEnumerable<T>)`
-        - Fluent `WithMessage` / `WithError` overloads preserved.
-        - Static factory: `PaginatedOutput<T>.New`
+    - Fluent `WithMessage` / `WithError` overloads preserved.
+    - Static factory: `PaginatedOutput<T>.New`
 
 - `CustomException` (abstract)
-    - Purpose: Base exception type wrapping an array of messages. Derive from it to create domain-specific exceptions
+  - Purpose: Base exception type wrapping an array of messages. Derive from it to create domain-specific exceptions
       that carry multiple messages.
-    - Key members:
-        - Constructor that accepts `string[] messages` and builds the base `Exception` message by joining them
-        - `string[] Messages { get; }`
+  - Key members:
+    - Constructor that accepts `string[] messages` and builds the base `Exception` message by joining them
+    - `string[] Messages { get; }`
 
 - `PaginatedOutputExtensions` (static)
-    - Purpose: Extension methods for `IQueryable<T>` to paginate a query and return a `PaginatedOutput<T>`.
-    - Methods:
-      - `Task<PaginatedOutput<T>> PaginateAsync<T>(this IQueryable<T> query, int pageNumber, int pageSize, Expression<Func<T, object?>>? orderBy = null, CancellationToken cancellationToken = default)`
-        - Uses EF Core async if the query provider supports `IAsyncQueryProvider`; otherwise falls back to
+  - Purpose: Extension methods for `IQueryable<T>` to paginate a query and return a `PaginatedOutput<T>`.
+  - Methods:
+    - `Task<PaginatedOutput<T>> PaginateAsync<T>(this IQueryable<T> query, int pageNumber, int pageSize, Expression<Func<T, object?>>? orderBy = null, CancellationToken cancellationToken = default)`
+      - Uses EF Core async if the query provider supports `IAsyncQueryProvider`; otherwise falls back to
         synchronous `ToList()`.
-      - `PaginatedOutput<T> Paginate<T>(this IQueryable<T> query, int pageNumber, int pageSize, Expression<Func<T, object?>>? orderBy = null)`
-        - Synchronous variant. When provided, `orderBy` is applied.
+    - `PaginatedOutput<T> Paginate<T>(this IQueryable<T> query, int pageNumber, int pageSize, Expression<Func<T, object?>>? orderBy = null)`
+      - Synchronous variant. When provided, `orderBy` is applied.
 
 ## Usage examples
 
@@ -202,5 +202,9 @@ Installation and usage instructions are available in their respective repositori
 ## Contributing
 
 Contributions are welcome. For small fixes a PR with tests and a few usage examples is ideal.
+
+## Legal Details
+
+This project is licensed under the [MIT License](https://en.wikipedia.org/wiki/MIT_License). A copy of the license is available at [LICENSE](./LICENSE) in the repository.
 
 ---
