@@ -1,4 +1,5 @@
 {{ define "main" }}
+  <h1>Posts for: #{{ .Title }}</h1>
   {{ with .Content }}
     <div class="index-content">
       {{ . }}
@@ -19,8 +20,6 @@
           {{- with .Params.Author -}}
             <span class="post-author">{{- . -}}</span>
           {{- end -}}
-          <!-- comments counter -->
-          {{ partial "comments_counter.html" . }}
         </div>
 
         {{ if .Params.tags }}
