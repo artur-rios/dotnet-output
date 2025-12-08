@@ -66,10 +66,10 @@ jobs:
             git push origin gh-pages || true
           fi
 
-          # Prepare a worktree for gh-pages
+          # Prepare a worktree for gh-pages on a local tracking branch
           git fetch --no-tags --prune origin gh-pages
           rm -rf gh-pages || true
-          git worktree add gh-pages origin/gh-pages
+          git worktree add -B gh-pages gh-pages origin/gh-pages
 
           # Clear existing contents in worktree (preserve .git)
           find gh-pages -mindepth 1 -maxdepth 1 ! -name ".git" -exec rm -rf {} +
@@ -89,7 +89,10 @@ jobs:
 
           # Commit and push from worktree
           cd gh-pages
+          echo "Worktree contents:" && ls -la || true
+          git status --porcelain
           git add -f -A
+          echo "Staged files:" && git diff --cached --name-only || true
           git commit -m "Deploy: ${GITHUB_SHA}" || git commit --allow-empty -m "Deploy (empty): ${GITHUB_SHA}"
           git push origin HEAD:gh-pages
 
