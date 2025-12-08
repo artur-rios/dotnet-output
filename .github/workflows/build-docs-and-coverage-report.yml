@@ -40,7 +40,7 @@ jobs:
         working-directory: docs
         run: hugo --environment production --minify --cleanDestinationDir --gc --baseURL "https://artur-rios.github.io/dotnet-output/"
 
-      - name: Commit built site to gh-pages via git
+      - name: Commit built site to a fresh gh-pages branch
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -48,41 +48,39 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          # Ensure we have gh-pages branch locally; create if missing
-          if git ls-remote --exit-code origin gh-pages >/dev/null 2>&1; then
-            echo "gh-pages exists on origin"
-          else
-            echo "gh-pages does not exist; creating orphan branch"
-            git checkout --orphan gh-pages
-            rm -rf .
-            echo "Initializing gh-pages" > README.md
-            git add -A
-            git commit -m "Initialize gh-pages"
-            git push origin gh-pages
-            git checkout -
-          fi
+          # Ensure we are on main (source branch)
+          src_branch="${GITHUB_REF_NAME}"
+          echo "Source branch: ${src_branch}"
 
-          # Prepare a worktree for gh-pages
-          git fetch --no-tags --prune origin gh-pages
-          rm -rf gh-pages || true
-          git worktree add gh-pages origin/gh-pages
+          # Fetch all and ensure gh-pages reference is up to date
+          git fetch --all --prune
 
-          # Clear existing contents (preserve .git in worktree)
-          find gh-pages -mindepth 1 -maxdepth 1 ! -name ".git" -exec rm -rf {} +
+          # Create a fresh orphan branch for gh-pages contents
+          # Use a temp local branch to compose the commit
+          tmp_branch="gh-pages-tmp"
+          git checkout --orphan "${tmp_branch}"
 
-          # Copy built site
-          cp -R docs/public/. gh-pages/
+          # Remove all files from the index and working tree
+          git rm -rf --cached . || true
+          find . -mindepth 1 -maxdepth 1 ! -name ".git" -exec rm -rf {} +
 
-          # Write deploy info to ensure a diff and traceability
-          echo "source_sha=${GITHUB_SHA}" > gh-pages/.deploy-info
-          date -u +"%Y-%m-%dT%H:%M:%SZ" >> gh-pages/.deploy-info
+          # Copy built site into working tree root
+          cp -R docs/public/. .
 
-          # Commit and push
-          cd gh-pages
+          # Prevent Jekyll processing on GitHub Pages
+          touch .nojekyll
+
+          # Write deploy info to ensure traceability
+          echo "source_sha=${GITHUB_SHA}" > .deploy-info
+          date -u +"%Y-%m-%dT%H:%M:%SZ" >> .deploy-info
+
+          # Stage and commit
           git add -A
-          git commit -m "Deploy: ${GITHUB_SHA}" || echo "No changes to commit, creating empty commit" && git commit --allow-empty -m "Deploy (empty): ${GITHUB_SHA}"
-          git push origin HEAD:gh-pages
+          git commit -m "Deploy: ${GITHUB_SHA}"
 
-          # Cleanup
-          cd -
-          git worktree remove gh-pages --force
+          # Force-push the temp branch to gh-pages
+          git push -f origin "${tmp_branch}:gh-pages"
+
+          # Return to source branch and delete temp branch
+          git checkout "${src_branch}"
+          git branch -D "${tmp_branch}" || true
