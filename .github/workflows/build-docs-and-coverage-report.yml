@@ -30,7 +30,7 @@ jobs:
         working-directory: docs
         env:
           HUGO_ENV: production
-        run: hugo --minify --baseURL "https://artur-rios.github.io/dotnet-output/"
+        run: hugo --minify --cleanDestinationDir --baseURL "https://artur-rios.github.io/dotnet-output/"
 
       - name: Commit built site to gh-pages via git
         env:
