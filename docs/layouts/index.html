@@ -1,0 +1,60 @@
+﻿{{- /* Minimal home page template to generate docs/public/index.html */ -}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{ .Site.Title }}</title>
+  {{- with .OutputFormats.Get "HTML" -}}
+  {{ .Rel -}}
+  {{- end -}}
+  {{- partial "head.html" . | safeHTML -}}
+</head>
+<body>
+  <header>
+    <h1>{{ .Site.Title }}</h1>
+    {{- with .Site.Params.logo.logoText -}}
+    <p>{{ . }}</p>
+    {{- end -}}
+    <nav>
+      <ul>
+        {{- range .Site.Menus.main -}}
+        <li><a href="{{ .URL }}">{{ .Name }}</a></li>
+        {{- end -}}
+      </ul>
+    </nav>
+  </header>
+  <main>
+    {{- if .Content -}}
+      {{ .Content }}
+    {{- else -}}
+      <section>
+        <h2>Pages</h2>
+        <ul>
+          {{- range .Site.RegularPages -}}
+          <li><a href="{{ .RelPermalink }}">{{ .Title }}</a></li>
+          {{- end -}}
+        </ul>
+      </section>
+    {{- end -}}
+
+    <section>
+      <h2>Taxonomies</h2>
+      <ul>
+        {{- range $key, $value := .Site.Taxonomies -}}
+        <li><a href="/{{ $key }}/">{{ $key | title }}</a></li>
+        {{- end -}}
+      </ul>
+    </section>
+
+    <section>
+      <h2>Test Coverage</h2>
+      <p><a href="/coverage-report/">Coverage Report</a></p>
+    </section>
+  </main>
+  <footer>
+    <p>&copy; {{ now.Year }} {{ .Site.Title }}</p>
+  </footer>
+</body>
+</html>
+

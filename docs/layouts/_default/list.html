@@ -1,0 +1,27 @@
+﻿{{- /* Minimal taxonomy/list template so Hugo can render categories/tags */ -}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{ .Title }} | {{ .Site.Title }}</title>
+  {{- partial "head.html" . | safeHTML -}}
+</head>
+<body>
+  <header>
+    <h1>{{ .Title }}</h1>
+    <p><a href="/">Home</a></p>
+  </header>
+  <main>
+    {{- if .Content -}}
+      {{ .Content }}
+    {{- end -}}
+    <ul>
+      {{- range .Pages -}}
+      <li><a href="{{ .RelPermalink }}">{{ .Title }}</a></li>
+      {{- end -}}
+    </ul>
+  </main>
+</body>
+</html>
+
