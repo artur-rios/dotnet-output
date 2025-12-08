@@ -41,10 +41,24 @@ jobs:
           set -e
           cd docs
           rm -rf publish public
-          hugo
-          echo "Built site directories:"
-          [ -d publish ] && ls -la publish || echo "docs/publish missing"
-          [ -d public ] && ls -la public || echo "docs/public missing"
+          echo "Hugo version:"
+          hugo version || true
+          echo "Building site to explicit destination: docs/public"
+          hugo --destination ./public
+          echo "Built site directories (root of docs):"
+          [ -d publish ] && { echo "docs/publish contents:"; ls -la publish; } || echo "docs/publish missing"
+          [ -d public ] && { echo "docs/public contents (top-level):"; ls -la public; } || echo "docs/public missing"
+          echo "Check for index.html in docs/public:"
+          if [ -f public/index.html ]; then
+            echo "Found docs/public/index.html"
+          else
+            echo "ERROR: docs/public/index.html not found after build"
+            echo "Listing up to 50 files under docs/public for diagnostics:"
+            [ -d public ] && find public -maxdepth 3 -type f | head -n 50 || true
+            echo "Listing theme directory for diagnostics:"
+            [ -d themes ] && ls -la themes || echo "docs/themes missing"
+            exit 1
+          fi
 
       - name: Prepare site bundle
         run: |
