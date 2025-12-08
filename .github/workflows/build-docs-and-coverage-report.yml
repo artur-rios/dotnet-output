@@ -15,87 +15,35 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
 
 jobs:
   build-and-deploy:
-    name: Build and Commit to gh-pages
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
+          submodules: true
           fetch-depth: 0
 
       - name: Setup Hugo
-        uses: peaceiris/actions-hugo@v2
+        uses: peaceiris/actions-hugo@v3
         with:
           hugo-version: 'latest'
           extended: true
 
-      - name: Clean Hugo generated resources
-        run: |
-          rm -rf docs/resources/_gen || true
-
-      - name: Build site
-        working-directory: docs
+      - name: Build Hugo site
         run: hugo --environment production --minify --cleanDestinationDir --gc --baseURL "https://artur-rios.github.io/dotnet-output/"
 
-      - name: Commit built site to gh-pages
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -e
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          # Ensure build output exists
-          if [ ! -d "docs/public" ]; then
-            echo "Build output directory docs/public not found."
-            echo "Hugo version:" && hugo version || true
-            echo "Listing docs directory:" && ls -la docs || true
-            echo "Listing docs/public (expected to exist):" && ls -la docs/public || true
-            exit 1
-          fi
-
-          # Ensure gh-pages exists on origin; create if missing
-          if git ls-remote --exit-code origin gh-pages >/dev/null 2>&1; then
-            echo "gh-pages exists on origin"
-          else
-            echo "gh-pages does not exist; creating branch"
-            git branch gh-pages || true
-            git push origin gh-pages || true
-          fi
-
-          # Prepare a worktree for gh-pages on a local tracking branch
-          git fetch --no-tags --prune origin gh-pages
-          rm -rf gh-pages || true
-          git worktree add -B gh-pages gh-pages origin/gh-pages
-
-          # Clear existing contents in worktree (preserve .git)
-          find gh-pages -mindepth 1 -maxdepth 1 ! -name ".git" -exec rm -rf {} +
-
-          # Copy built site into worktree
-          cp -R docs/public/. gh-pages/
-
-          # Prevent Jekyll processing on GitHub Pages
-          touch gh-pages/.nojekyll
-
-          # Ensure no ignore rules block assets in the worktree
-          rm -f gh-pages/.gitignore || true
-
-          # Write deploy info to ensure traceability
-          echo "source_sha=${GITHUB_SHA}" > gh-pages/.deploy-info
-          date -u +"%Y-%m-%dT%H:%M:%SZ" >> gh-pages/.deploy-info
-
-          # Commit and push from worktree
-          cd gh-pages
-          echo "Worktree contents:" && ls -la || true
-          git status --porcelain
-          git add -f -A
-          echo "Staged files:" && git diff --cached --name-only || true
-          git commit -m "Deploy: ${GITHUB_SHA}" || git commit --allow-empty -m "Deploy (empty): ${GITHUB_SHA}"
-          git push origin HEAD:gh-pages
-
-          # Cleanup
-          cd -
-          git worktree remove gh-pages --force
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs/public
+          publish_branch: gh-pages
