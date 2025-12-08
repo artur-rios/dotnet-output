@@ -29,7 +29,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          submodules: true
+          submodules: recursive
           fetch-depth: 0
 
       - name: Setup Hugo
@@ -39,7 +39,7 @@ jobs:
           extended: true
 
       - name: Build Hugo site
-        run: hugo --environment production --minify --cleanDestinationDir --gc --baseURL "https://artur-rios.github.io/dotnet-output/"
+        run: hugo -s docs --environment production --minify --cleanDestinationDir --gc --baseURL "https://artur-rios.github.io/dotnet-output/"
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
