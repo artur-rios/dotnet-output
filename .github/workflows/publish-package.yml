@@ -27,11 +27,10 @@ jobs:
           # Check out the ref (tag) that triggered the workflow
           ref: ${{ github.ref }}
 
-      - name: Setup .NET SDK (include prerelease for .NET 10)
+      - name: Setup .NET SDK
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '10.0.x'
-          include-prerelease: true
 
       - name: Validate tag matches csproj version
         run: |
