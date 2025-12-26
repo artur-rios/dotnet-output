@@ -2,22 +2,23 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <LangVersion>latest</LangVersion>
-    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-    <IncludeSymbols>false</IncludeSymbols>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <PackageId>ArturRios.Output</PackageId>
-    <Version>2.0.1</Version>
     <Authors>Artur Rios</Authors>
     <Company>Artur Rios</Company>
     <Description>A .NET helper library that standardizes process and data outputs</Description>
-    <PackageTags>utilities</PackageTags>
+    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IncludeSymbols>false</IncludeSymbols>
+    <Nullable>enable</Nullable>
+    <PackageId>ArturRios.Output</PackageId>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <RepositoryUrl>https://github.com/artur-rios/dotnet-output</RepositoryUrl>
     <PackageProjectUrl>https://artur-rios.github.io/dotnet-output</PackageProjectUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+    <PackageTags>utilities</PackageTags>
+    <RepositoryUrl>https://github.com/artur-rios/dotnet-output</RepositoryUrl>
+    <Version>2.0.1</Version>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.10" />
