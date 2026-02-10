@@ -3,7 +3,7 @@ namespace ArturRios.Output.Tests;
 public class PaginatedOutputTests
 {
     [Fact]
-    public void Should_AddItems_And_CalculatePagination()
+    public void GivenPaginatedOutput_WhenAddingItems_ThenPaginationIsCalculated()
     {
         var output = PaginatedOutput<int>.New.WithEmptyData().WithPagination(2, 50);
 
@@ -17,7 +17,7 @@ public class PaginatedOutputTests
     }
 
     [Fact]
-    public void Should_CreateWithData()
+    public void GivenSingleItem_WhenCreatingWithData_ThenDataContainsSingleItem()
     {
         var output = PaginatedOutput<string>.New.WithData("a");
 
@@ -27,7 +27,7 @@ public class PaginatedOutputTests
     }
 
     [Fact]
-    public void Should_AddData()
+    public void GivenExistingData_WhenAddingData_ThenDataIsAppended()
     {
         var output = PaginatedOutput<string>.New.WithData(["a"]);
 
@@ -42,7 +42,7 @@ public class PaginatedOutputTests
     }
 
     [Fact]
-    public void Should_ReplaceData()
+    public void GivenExistingData_WhenReplacingWithArray_ThenDataIsReplaced()
     {
         var output = PaginatedOutput<string>.New.WithData(["a"]);
 
@@ -58,7 +58,7 @@ public class PaginatedOutputTests
     }
 
     [Fact]
-    public void Should_CalculatePageSize_And_TotalPages()
+    public void GivenDataAndPagination_WhenCalculating_ThenPageSizeAndTotalPagesAreCorrect()
     {
         var output = PaginatedOutput<int>.New.WithData([1, 2, 3]).WithPagination(1, 7);
 
@@ -70,7 +70,7 @@ public class PaginatedOutputTests
     }
 
     [Fact]
-    public void Should_CreateWithMessage()
+    public void GivenDataAndMessage_WhenCreating_ThenOutputContainsDataAndMessage()
     {
         var output = PaginatedOutput<string>.New
             .WithData(["a"])
@@ -83,7 +83,7 @@ public class PaginatedOutputTests
     }
 
     [Fact]
-    public void Should_CreateWithMessages_And_IgnoreEmpty()
+    public void GivenMessagesWithEmptyStrings_WhenCreating_ThenEmptyMessagesAreIgnored()
     {
         var output = PaginatedOutput<string>.New
             .WithData(["a"])
@@ -98,7 +98,7 @@ public class PaginatedOutputTests
     }
 
     [Fact]
-    public void Should_CreateWithError()
+    public void GivenDataAndError_WhenCreating_ThenOutputContainsDataAndError()
     {
         var output = PaginatedOutput<string>.New
             .WithData(["a"])
@@ -111,7 +111,7 @@ public class PaginatedOutputTests
     }
 
     [Fact]
-    public void Should_CreateWithErrors_And_IgnoreEmpty()
+    public void GivenErrorsWithEmptyStrings_WhenCreating_ThenEmptyErrorsAreIgnored()
     {
         var output = PaginatedOutput<string>.New
             .WithData(["a"])

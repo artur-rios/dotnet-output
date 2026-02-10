@@ -5,7 +5,7 @@ namespace ArturRios.Output.Tests;
 public class PaginatedOutputExtensionsTests
 {
     [Fact]
-    public void Should_Paginate()
+    public void GivenQueryableData_WhenPaginating_ThenReturnsPaginatedResult()
     {
         var data = new List<Item>
         {
@@ -22,7 +22,7 @@ public class PaginatedOutputExtensionsTests
     }
 
     [Fact]
-    public void Should_Paginate_And_OrderById()
+    public void GivenQueryableData_WhenPaginatingWithOrderBy_ThenReturnsOrderedPaginatedResult()
     {
         var data = new List<Item>
         {
@@ -39,7 +39,7 @@ public class PaginatedOutputExtensionsTests
     }
 
     [Fact]
-    public void Should_NormalizePageNumberAndPageSize_ToAtLeastOne()
+    public void GivenZeroPageNumberAndPageSize_WhenPaginating_ThenNormalizesToAtLeastOne()
     {
         var data = Enumerable.Range(1, 3).Select(i => new Item { Id = i }).ToList();
 
@@ -52,7 +52,7 @@ public class PaginatedOutputExtensionsTests
     }
 
     [Fact]
-    public async Task Should_PaginateAsync()
+    public async Task GivenQueryableData_WhenPaginatingAsync_ThenReturnsPaginatedResult()
     {
         var data = new List<Item>
         {
@@ -69,7 +69,7 @@ public class PaginatedOutputExtensionsTests
     }
 
     [Fact]
-    public async Task Should_Paginate_And_OrderByIdAsync()
+    public async Task GivenQueryableData_WhenPaginatingAsyncWithOrderBy_ThenReturnsOrderedPaginatedResult()
     {
         var data = new List<Item>
         {
@@ -86,7 +86,7 @@ public class PaginatedOutputExtensionsTests
     }
 
     [Fact]
-    public async Task Should_NormalizePageNumberAndPageSize_ToAtLeastOneAsync()
+    public async Task GivenZeroPageNumberAndPageSize_WhenPaginatingAsync_ThenNormalizesToAtLeastOne()
     {
         var data = Enumerable.Range(1, 3).Select(i => new Item { Id = i }).ToList();
 

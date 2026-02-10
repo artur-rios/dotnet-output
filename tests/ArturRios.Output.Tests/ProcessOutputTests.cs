@@ -3,7 +3,7 @@ namespace ArturRios.Output.Tests;
 public class ProcessOutputTests
 {
     [Fact]
-    public void Should_AddError_FilterEmpty_And_SetSuccessFalse()
+    public void GivenErrorsWithEmptyAndValid_WhenAddingError_ThenOnlyValidErrorIsAddedAndSuccessIsFalse()
     {
         var output = ProcessOutput.New;
 
@@ -17,7 +17,7 @@ public class ProcessOutputTests
     }
 
     [Fact]
-    public void ShouldNot_AddError()
+    public void GivenOnlyEmptyErrors_WhenAddingError_ThenNoErrorIsAdded()
     {
         var output = ProcessOutput.New;
 
@@ -31,7 +31,7 @@ public class ProcessOutputTests
     }
 
     [Fact]
-    public void Should_AddErrors_And_FilterEmpty()
+    public void GivenErrorsArrayWithEmptyStrings_WhenAddingErrors_ThenOnlyValidErrorsAreAdded()
     {
         var output = ProcessOutput.New;
 
@@ -42,7 +42,7 @@ public class ProcessOutputTests
     }
 
     [Fact]
-    public void ShouldNot_AddErrors()
+    public void GivenOnlyEmptyErrorsArray_WhenAddingErrors_ThenNoErrorIsAdded()
     {
         var output = ProcessOutput.New;
 
@@ -54,7 +54,7 @@ public class ProcessOutputTests
     }
 
     [Fact]
-    public void Should_AddMessage_And_FilterEmpty()
+    public void GivenMessagesWithEmptyAndValid_WhenAddingMessage_ThenOnlyValidMessageIsAdded()
     {
         var output = ProcessOutput.New;
 
@@ -70,7 +70,7 @@ public class ProcessOutputTests
     }
 
     [Fact]
-    public void ShouldNot_AddMessage()
+    public void GivenOnlyEmptyMessages_WhenAddingMessage_ThenNoMessageIsAdded()
     {
         var output = ProcessOutput.New;
 
@@ -84,7 +84,7 @@ public class ProcessOutputTests
     }
 
     [Fact]
-    public void Should_AddMessages_And_FilterEmpty()
+    public void GivenMessagesArrayWithEmptyStrings_WhenAddingMessages_ThenOnlyValidMessagesAreAdded()
     {
         var output = ProcessOutput.New;
 
@@ -96,7 +96,7 @@ public class ProcessOutputTests
     }
 
     [Fact]
-    public void ShouldNot_AddMessages()
+    public void GivenOnlyEmptyMessagesArray_WhenAddingMessages_ThenNoMessageIsAdded()
     {
         var output = ProcessOutput.New;
 
@@ -108,7 +108,7 @@ public class ProcessOutputTests
     }
 
     [Fact]
-    public void Should_AddProperties()
+    public void GivenMessagesAndErrors_WhenAddingProperties_ThenAllPropertiesAreAdded()
     {
         var output = ProcessOutput.New
             .WithMessage("m")

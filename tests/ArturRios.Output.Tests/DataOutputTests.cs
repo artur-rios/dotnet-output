@@ -3,7 +3,7 @@
 public class DataOutputTests
 {
     [Fact]
-    public void Should_CreateWithData()
+    public void GivenStringData_WhenCreatingWithData_ThenOutputContainsDataAndSuccess()
     {
         var output = DataOutput<string>.New.WithData("Hello world");
 
@@ -13,7 +13,7 @@ public class DataOutputTests
     }
 
     [Fact]
-    public void Should_AddData()
+    public void GivenNewOutput_WhenAddingData_ThenOutputContainsDataAndSuccess()
     {
         var output = DataOutput<string>.New;
         output.AddData("Hello world");
@@ -24,7 +24,7 @@ public class DataOutputTests
     }
 
     [Fact]
-    public void Should_AddError_And_SetSuccessFalse()
+    public void GivenOutputWithData_WhenAddingError_ThenSuccessIsFalse()
     {
         var output = DataOutput<int>.New.WithData(5).WithError("Something went wrong");
 
@@ -34,7 +34,7 @@ public class DataOutputTests
     }
 
     [Fact]
-    public void Should_FilterEmpty_And_AddErrors()
+    public void GivenErrorsWithEmptyStrings_WhenAddingErrors_ThenOnlyNonEmptyErrorsAreAdded()
     {
         var errors = new[] { "err1", "", "  ", "err2" };
 
@@ -47,7 +47,7 @@ public class DataOutputTests
     }
 
     [Fact]
-    public void Should_AddMessage()
+    public void GivenMessage_WhenAddingMessage_ThenMessageIsAdded()
     {
         var output = DataOutput<bool>.New.WithMessage("Ok");
 
@@ -56,7 +56,7 @@ public class DataOutputTests
     }
 
     [Fact]
-    public void Should_FilterEmpty_And_AddMessages()
+    public void GivenMessagesWithEmptyStrings_WhenAddingMessages_ThenOnlyNonEmptyMessagesAreAdded()
     {
         var messages = new List<string> { "m1", "", "m2" };
 
@@ -68,7 +68,7 @@ public class DataOutputTests
     }
 
     [Fact]
-    public void Should_AllowNullData_For_NullableTypes()
+    public void GivenNullableType_WhenAddingNullData_ThenNullDataIsAllowed()
     {
         var output = DataOutput<string?>.New.WithData(null);
 

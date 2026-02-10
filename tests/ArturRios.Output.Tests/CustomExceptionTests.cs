@@ -5,7 +5,7 @@ namespace ArturRios.Output.Tests;
 public class Tests
 {
     [Fact]
-    public void Should_ReturnMessage()
+    public void GivenSingleMessage_WhenExceptionIsThrown_ThenReturnMessage()
     {
         var messages = new[] { "Error 1" };
 
@@ -16,7 +16,7 @@ public class Tests
     }
 
     [Fact]
-    public void Should_ReturnMessages()
+    public void GivenMultipleMessages_WhenExceptionIsThrown_ThenReturnConcatenatedMessages()
     {
         var messages = new[] { "Error 1", "Error 2" };
 
