@@ -1,5 +1,9 @@
 ﻿# Dotnet Output
 
+[![Docs](https://img.shields.io/badge/docs-website-blue)](https://artur-rios.github.io/dotnet-output)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
+[![NuGet](https://img.shields.io/nuget/v/ArturRios.Output.svg)](https://www.nuget.org/packages/ArturRios.Output)
+
 A .NET helper library that standardizes process and data outputs, provides a paginated output container, and
 includes IQueryable pagination extension methods (synchronous & asynchronous).
 
@@ -188,6 +192,11 @@ classDiagram
     PaginatedOutputExtensions ..> PaginatedOutput_T: uses
 ```
 
+## Versioning
+
+Semantic Versioning (SemVer). Breaking changes result in a new major version. New methods or non-breaking behavior
+changes increment the minor version; fixes or tweaks increment the patch.
+
 ## Build, test and publish
 
 Use the official [.NET CLI](https://learn.microsoft.com/en-us/dotnet/core/tools/) to build, test and publish the project and Git for source control.
@@ -196,15 +205,6 @@ If you want, optional helper toolsets I built to facilitate these tasks are avai
 - [Dotnet Tools](https://github.com/artur-rios/dotnet-tools)
 - [Python Dotnet Tools](https://github.com/artur-rios/python-dotnet-tools)
 
-Both of them are compatible with this project structure.
-Installation and usage instructions are available in their respective repositories.
-
-## Contributing
-
-Contributions are welcome. For small fixes a PR with tests and a few usage examples is ideal.
-
 ## Legal Details
 
 This project is licensed under the [MIT License](https://en.wikipedia.org/wiki/MIT_License). A copy of the license is available at [LICENSE](./LICENSE) in the repository.
-
----
