@@ -1,4 +1,6 @@
-﻿namespace ArturRios.Output;
+﻿using System.Text.Json.Serialization;
+
+namespace ArturRios.Output;
 
 /// <summary>
 /// Represents a paginated collection result and pagination metadata.
@@ -12,9 +14,12 @@ public class PaginatedOutput<T> : DataOutput<List<T>>
     public int PageNumber { get; set; }
 
     /// <summary>
-    /// Number of items in the current page.
+    /// Number of items requested per page. This is the requested page size, not the
+    /// number of items actually present in <see cref="DataOutput{T}.Data"/>, which may
+    /// be smaller on the last page.
     /// </summary>
-    public int PageSize => Data?.Count ?? 0;
+    [JsonInclude]
+    public int PageSize { get; private set; }
 
     /// <summary>
     /// Total number of items across all pages.
@@ -23,8 +28,9 @@ public class PaginatedOutput<T> : DataOutput<List<T>>
 
     /// <summary>
     /// Total number of pages computed from <see cref="TotalItems"/> and <see cref="PageSize"/>.
+    /// Evaluates to <c>0</c> when no page size has been set.
     /// </summary>
-    public int TotalPages => (int)Math.Ceiling((double)TotalItems / PageSize);
+    public int TotalPages => PageSize == 0 ? 0 : (int)Math.Ceiling((double)TotalItems / PageSize);
 
     /// <summary>
     /// Creates a new <see cref="PaginatedOutput{T}"/> instance.
@@ -35,11 +41,13 @@ public class PaginatedOutput<T> : DataOutput<List<T>>
     /// Sets pagination metadata for the current instance.
     /// </summary>
     /// <param name="pageNumber">The 1-based page number.</param>
+    /// <param name="pageSize">The number of items requested per page.</param>
     /// <param name="totalItems">The total number of items available.</param>
     /// <returns>The same <see cref="PaginatedOutput{T}"/> instance for chaining.</returns>
-    public PaginatedOutput<T> WithPagination(int pageNumber, int totalItems)
+    public PaginatedOutput<T> WithPagination(int pageNumber, int pageSize, int totalItems)
     {
         PageNumber = pageNumber;
+        PageSize = pageSize;
         TotalItems = totalItems;
 
         return this;

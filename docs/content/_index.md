@@ -65,10 +65,10 @@ don't).
   - Purpose: Represents a paginated result set containing `List<T>` as the payload.
   - Key members:
     - `int PageNumber { get; set; }`
-    - `int PageSize { get; }` (derived from Data?.Count)
+    - `int PageSize { get; }` (the requested page size, set via `WithPagination`)
     - `int TotalItems { get; set; }`
-    - `int TotalPages { get; }` (computed as Ceil(TotalItems / PageSize))
-    - Helpers to build: `WithPagination(int pageNumber, int totalItems)`, `WithData(List<T>)`, `WithData(T)`,
+    - `int TotalPages { get; }` (computed as Ceil(TotalItems / PageSize), or 0 when PageSize is 0)
+    - Helpers to build: `WithPagination(int pageNumber, int pageSize, int totalItems)`, `WithData(List<T>)`, `WithData(T)`,
             `WithEmptyData()`, `AddItem(T)`, `AddItems(IEnumerable<T>)`
     - Fluent `WithMessage` / `WithError` overloads preserved.
     - Static factory: `PaginatedOutput<T>.New`
@@ -153,9 +153,10 @@ This keeps the library as a normal project dependency and allows debugging into 
 
 ## API notes & gotchas
 
-- `PaginatedOutput.PageSize` is derived from the returned `Data.Count` (i.e., the number of items in the current page).
-    `TotalItems` is intended to be the total number of items across all pages. `TotalPages` is computed as
-    `Ceiling(TotalItems / PageSize)`.
+- `PaginatedOutput.PageSize` is the page size requested by the caller, not the number of items in the current page —
+    the last page usually holds fewer items than that. `TotalItems` is the total number of items across all pages, and
+    `TotalPages` is computed as `Ceiling(TotalItems / PageSize)`, or `0` when `PageSize` is `0` (that is, when
+    `WithPagination` has not been called).
 
 ## Class diagram
 

@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 namespace ArturRios.Output.Tests;
 
 public class PaginatedOutputTests
@@ -5,7 +7,7 @@ public class PaginatedOutputTests
     [Fact]
     public void GivenPaginatedOutput_WhenAddingItems_ThenPaginationIsCalculated()
     {
-        var output = PaginatedOutput<int>.New.WithEmptyData().WithPagination(2, 50);
+        var output = PaginatedOutput<int>.New.WithEmptyData().WithPagination(2, 10, 50);
 
         output.AddItem(1);
         output.AddItems([2, 3]);
@@ -60,13 +62,67 @@ public class PaginatedOutputTests
     [Fact]
     public void GivenDataAndPagination_WhenCalculating_ThenPageSizeAndTotalPagesAreCorrect()
     {
-        var output = PaginatedOutput<int>.New.WithData([1, 2, 3]).WithPagination(1, 7);
+        var output = PaginatedOutput<int>.New.WithData([1, 2, 3]).WithPagination(1, 3, 7);
 
         Assert.NotNull(output.Data);
         Assert.Equal(3, output.PageSize);
         Assert.Equal(3, output.Data.Count);
-        Assert.Equal(3, output.PageSize);
         Assert.Equal((int)Math.Ceiling(7d / 3d), output.TotalPages);
+    }
+
+    [Fact]
+    public void GivenPartialLastPage_WhenCalculating_ThenTotalPagesUsesRequestedPageSize()
+    {
+        var output = PaginatedOutput<int>.New.WithData([21, 22, 23]).WithPagination(3, 10, 23);
+
+        Assert.Equal(10, output.PageSize);
+        Assert.Equal(3, output.Data?.Count);
+        Assert.Equal(3, output.TotalPages);
+    }
+
+    [Fact]
+    public void GivenPagination_WhenAddingItems_ThenPageSizeIsUnaffected()
+    {
+        var output = PaginatedOutput<int>.New.WithEmptyData().WithPagination(1, 10, 23);
+
+        output.AddItems([1, 2, 3]);
+
+        Assert.Equal(10, output.PageSize);
+        Assert.Equal(3, output.Data?.Count);
+    }
+
+    [Fact]
+    public void GivenNoPagination_WhenCalculating_ThenTotalPagesIsZero()
+    {
+        var output = PaginatedOutput<int>.New.WithData([1, 2, 3]);
+
+        Assert.Equal(0, output.PageSize);
+        Assert.Equal(0, output.TotalPages);
+    }
+
+    [Fact]
+    public void GivenNullData_WhenCalculating_ThenTotalPagesIsZero()
+    {
+        var output = PaginatedOutput<int>.New.WithPagination(1, 10, 0);
+
+        Assert.Null(output.Data);
+        Assert.Equal(0, output.TotalPages);
+    }
+
+    [Fact]
+    public void GivenSerializedOutput_WhenDeserializing_ThenPaginationMetadataIsRestored()
+    {
+        var output = PaginatedOutput<int>.New.WithData([21, 22, 23]).WithPagination(3, 10, 23);
+
+        var json = JsonSerializer.Serialize(output);
+        var deserialized = JsonSerializer.Deserialize<PaginatedOutput<int>>(json);
+
+        Assert.NotNull(deserialized);
+        Assert.Equal([21, 22, 23], deserialized.Data);
+        Assert.Equal(3, deserialized.PageNumber);
+        Assert.Equal(10, deserialized.PageSize);
+        Assert.Equal(23, deserialized.TotalItems);
+        Assert.Equal(3, deserialized.TotalPages);
     }
 
     [Fact]

@@ -52,6 +52,34 @@ public class PaginatedOutputExtensionsTests
     }
 
     [Fact]
+    public void GivenPartialLastPage_WhenPaginating_ThenTotalPagesUsesRequestedPageSize()
+    {
+        var data = Enumerable.Range(1, 23).Select(i => new Item { Id = i }).ToList();
+
+        var result = data.AsQueryable().Paginate(3, 10);
+
+        Assert.NotNull(result.Data);
+        Assert.Equal(3, result.Data.Count);
+        Assert.Equal(10, result.PageSize);
+        Assert.Equal(23, result.TotalItems);
+        Assert.Equal(3, result.TotalPages);
+    }
+
+    [Fact]
+    public async Task GivenPartialLastPage_WhenPaginatingAsync_ThenTotalPagesUsesRequestedPageSize()
+    {
+        var data = Enumerable.Range(1, 23).Select(i => new Item { Id = i }).ToList();
+
+        var result = await data.AsQueryable().PaginateAsync(3, 10);
+
+        Assert.NotNull(result.Data);
+        Assert.Equal(3, result.Data.Count);
+        Assert.Equal(10, result.PageSize);
+        Assert.Equal(23, result.TotalItems);
+        Assert.Equal(3, result.TotalPages);
+    }
+
+    [Fact]
     public async Task GivenQueryableData_WhenPaginatingAsync_ThenReturnsPaginatedResult()
     {
         var data = new List<Item>

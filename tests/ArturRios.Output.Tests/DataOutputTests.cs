@@ -1,4 +1,6 @@
-﻿namespace ArturRios.Output.Tests;
+﻿using System.Text.Json;
+
+namespace ArturRios.Output.Tests;
 
 public class DataOutputTests
 {
@@ -74,5 +76,40 @@ public class DataOutputTests
 
         Assert.Null(output.Data);
         Assert.True(output.Success);
+    }
+
+    [Fact]
+    public void GivenSerializedOutput_WhenDeserializing_ThenAllPropertiesAreRestored()
+    {
+        var output = DataOutput<string>.New
+            .WithData("Hello world")
+            .WithMessage("Ok")
+            .WithError("Something went wrong");
+
+        var json = JsonSerializer.Serialize(output);
+        var deserialized = JsonSerializer.Deserialize<DataOutput<string>>(json);
+
+        Assert.NotNull(deserialized);
+        Assert.Equal("Hello world", deserialized.Data);
+        Assert.Equal(output.Messages, deserialized.Messages);
+        Assert.Equal(output.Errors, deserialized.Errors);
+        Assert.Equal(output.Timestamp, deserialized.Timestamp);
+        Assert.False(deserialized.Success);
+    }
+
+    [Fact]
+    public void GivenCamelCaseJson_WhenDeserializingWithWebOptions_ThenAllPropertiesAreRestored()
+    {
+        var options = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+        var output = DataOutput<int>.New.WithData(5).WithMessage("Ok");
+
+        var json = JsonSerializer.Serialize(output, options);
+        var deserialized = JsonSerializer.Deserialize<DataOutput<int>>(json, options);
+
+        Assert.NotNull(deserialized);
+        Assert.Equal(5, deserialized.Data);
+        Assert.Equal(output.Messages, deserialized.Messages);
+        Assert.Equal(output.Timestamp, deserialized.Timestamp);
+        Assert.True(deserialized.Success);
     }
 }

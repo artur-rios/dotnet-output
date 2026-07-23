@@ -1,4 +1,6 @@
-﻿namespace ArturRios.Output;
+﻿using System.Text.Json.Serialization;
+
+namespace ArturRios.Output;
 
 /// <summary>
 /// Represents the outcome of an operation and provides a standardized way to
@@ -9,18 +11,21 @@ public class ProcessOutput
     /// <summary>
     /// Collection of informational messages produced during the process.
     /// </summary>
-    public List<string> Messages { get; } = [];
+    [JsonInclude]
+    public List<string> Messages { get; private set; } = [];
 
     /// <summary>
     /// Collection of error messages produced during the process. If this list
     /// is empty the <see cref="Success"/> property evaluates to <c>true</c>.
     /// </summary>
-    public List<string> Errors { get; } = [];
+    [JsonInclude]
+    public List<string> Errors { get; private set; } = [];
 
     /// <summary>
     /// UTC timestamp representing when this output instance was created.
     /// </summary>
-    public DateTime Timestamp { get; } = DateTime.UtcNow;
+    [JsonInclude]
+    public DateTime Timestamp { get; private set; } = DateTime.UtcNow;
 
     /// <summary>
     /// Indicates whether the process completed successfully (no errors were added).

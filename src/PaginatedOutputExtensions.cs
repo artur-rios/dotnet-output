@@ -58,7 +58,7 @@ public static class PaginatedOutputExtensions
 
         return PaginatedOutput<T>.New
             .WithData(items)
-            .WithPagination(pageNumber, totalCount.Value);
+            .WithPagination(pageNumber, pageSize, totalCount.Value);
     }
 
     /// <summary>
@@ -97,7 +97,7 @@ public static class PaginatedOutputExtensions
 
         return PaginatedOutput<T>.New
             .WithData(items)
-            .WithPagination(pageNumber, totalCount.Value);
+            .WithPagination(pageNumber, pageSize, totalCount.Value);
     }
 
     /// <summary>
