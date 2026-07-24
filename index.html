@@ -42,10 +42,18 @@ synchronous <code>ToList()</code>.</li></ul></li><li><code>PaginatedOutput&lt;T>
 </span></span><span style=display:flex><span>
 </span></span><span style=display:flex><span><span style=color:#75715e># then add the csproj to your solution (adjust path)</span>
 </span></span><span style=display:flex><span>dotnet sln add external/dotnet-output/src/ArturRios.Output.csproj
-</span></span></code></pre></div><p>This keeps the library as a normal project dependency and allows debugging into its code.</p><h2 id=api-notes--gotchas>API notes & gotchas</h2><ul><li><code>PaginatedOutput.PageSize</code> is the page size requested by the caller, not the number of items in the current page —
+</span></span></code></pre></div><p>This keeps the library as a normal project dependency and allows debugging into its code.</p><h2 id=api-notes--gotchas>API notes & gotchas</h2><ul><li><p><strong>Serialization.</strong> The output types round-trip under both <code>System.Text.Json</code> and <code>Newtonsoft.Json</code>,
+including payloads written by one and read by the other. Every serialized member — <code>Data</code>,
+<code>Messages</code>, <code>Errors</code>, <code>Timestamp</code>, <code>PageNumber</code>, <code>PageSize</code>, <code>TotalItems</code> — has a public getter
+and setter, which both serializers handle by default, so the library carries no serializer
+attributes and no serializer dependency. <code>Success</code> and <code>TotalPages</code> are computed: they are
+written out, and ignored on read. The <code>AddX</code> / <code>WithX</code> helpers remain the intended way to build
+an output; the setters exist so serializers can populate one.</p></li><li><p><code>Messages</code> and <code>Errors</code> are never <code>null</code>. Assigning <code>null</code> — which is what a deserializer does
+when the payload carries an explicit <code>"messages": null</code> — resets them to empty lists, so
+<code>Success</code> and the <code>AddX</code> helpers stay safe on hostile or partial input.</p></li><li><p><code>PaginatedOutput.PageSize</code> is the page size requested by the caller, not the number of items in the current page —
 the last page usually holds fewer items than that. <code>TotalItems</code> is the total number of items across all pages, and
 <code>TotalPages</code> is computed as <code>Ceiling(TotalItems / PageSize)</code>, or <code>0</code> when <code>PageSize</code> is <code>0</code> (that is, when
-<code>WithPagination</code> has not been called).</li></ul><h2 id=class-diagram>Class diagram</h2><p>Below is a mermaid class diagram representing the public classes in this project. You can paste this into any
+<code>WithPagination</code> has not been called).</p></li></ul><h2 id=class-diagram>Class diagram</h2><p>Below is a mermaid class diagram representing the public classes in this project. You can paste this into any
 mermaid-enabled renderer (for example GitHub markdown with mermaid enabled, or live editors).</p><pre class=mermaid>classDiagram
     class ProcessOutput {
         +Messages: List_string
