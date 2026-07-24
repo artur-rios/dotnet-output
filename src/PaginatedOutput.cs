@@ -1,6 +1,4 @@
-﻿using System.Text.Json.Serialization;
-
-namespace ArturRios.Output;
+﻿namespace ArturRios.Output;
 
 /// <summary>
 /// Represents a paginated collection result and pagination metadata.
@@ -18,8 +16,7 @@ public class PaginatedOutput<T> : DataOutput<List<T>>
     /// number of items actually present in <see cref="DataOutput{T}.Data"/>, which may
     /// be smaller on the last page.
     /// </summary>
-    [JsonInclude]
-    public int PageSize { get; private set; }
+    public int PageSize { get; set; }
 
     /// <summary>
     /// Total number of items across all pages.

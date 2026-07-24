@@ -149,6 +149,18 @@ This keeps the library as a normal project dependency and allows debugging into 
 
 ## API notes & gotchas
 
+- **Serialization.** The output types round-trip under both `System.Text.Json` and `Newtonsoft.Json`,
+  including payloads written by one and read by the other. Every serialized member — `Data`,
+  `Messages`, `Errors`, `Timestamp`, `PageNumber`, `PageSize`, `TotalItems` — has a public getter
+  and setter, which both serializers handle by default, so the library carries no serializer
+  attributes and no serializer dependency. `Success` and `TotalPages` are computed: they are
+  written out, and ignored on read. The `AddX` / `WithX` helpers remain the intended way to build
+  an output; the setters exist so serializers can populate one.
+
+- `Messages` and `Errors` are never `null`. Assigning `null` — which is what a deserializer does
+  when the payload carries an explicit `"messages": null` — resets them to empty lists, so
+  `Success` and the `AddX` helpers stay safe on hostile or partial input.
+
 - `PaginatedOutput.PageSize` is the page size requested by the caller, not the number of items in the current page —
   the last page usually holds fewer items than that. `TotalItems` is the total number of items across all pages, and
   `TotalPages` is computed as `Ceiling(TotalItems / PageSize)`, or `0` when `PageSize` is `0` (that is, when

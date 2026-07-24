@@ -1,6 +1,4 @@
-﻿using System.Text.Json.Serialization;
-
-namespace ArturRios.Output;
+﻿namespace ArturRios.Output;
 
 /// <summary>
 /// Represents a process output that carries a typed data payload.
@@ -11,8 +9,7 @@ public class DataOutput<T> : ProcessOutput
     /// <summary>
     /// The payload data for this output. May be <c>null</c>.
     /// </summary>
-    [JsonInclude]
-    public T? Data { get; protected set; }
+    public T? Data { get; set; }
 
     /// <summary>
     /// Creates a new <see cref="DataOutput{T}"/> instance.

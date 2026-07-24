@@ -3,6 +3,31 @@ namespace ArturRios.Output.Tests;
 public class ProcessOutputTests
 {
     [Fact]
+    public void GivenNullAssignedToCollections_WhenReadingThem_ThenTheyFallBackToEmptyLists()
+    {
+        var output = ProcessOutput.New;
+
+        output.Messages = null!;
+        output.Errors = null!;
+
+        Assert.Empty(output.Messages);
+        Assert.Empty(output.Errors);
+        Assert.True(output.Success);
+    }
+
+    [Fact]
+    public void GivenNullAssignedToErrors_WhenAddingError_ThenErrorIsStillCollected()
+    {
+        var output = ProcessOutput.New;
+
+        output.Errors = null!;
+        output.AddError("err1");
+
+        Assert.Single(output.Errors);
+        Assert.False(output.Success);
+    }
+
+    [Fact]
     public void GivenErrorsWithEmptyAndValid_WhenAddingError_ThenOnlyValidErrorIsAddedAndSuccessIsFalse()
     {
         var output = ProcessOutput.New;

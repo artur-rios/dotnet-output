@@ -98,6 +98,20 @@ public class DataOutputTests
     }
 
     [Fact]
+    public void GivenJsonWithNullCollections_WhenDeserializing_ThenCollectionsFallBackToEmptyLists()
+    {
+        const string json = """{"Data":"Hello world","Messages":null,"Errors":null}""";
+
+        var deserialized = JsonSerializer.Deserialize<DataOutput<string>>(json);
+
+        Assert.NotNull(deserialized);
+        Assert.Equal("Hello world", deserialized.Data);
+        Assert.Empty(deserialized.Messages);
+        Assert.Empty(deserialized.Errors);
+        Assert.True(deserialized.Success);
+    }
+
+    [Fact]
     public void GivenCamelCaseJson_WhenDeserializingWithWebOptions_ThenAllPropertiesAreRestored()
     {
         var options = new JsonSerializerOptions(JsonSerializerDefaults.Web);
