@@ -1,8 +1,10 @@
-+++
-title = 'Dotnet Output'
-+++
-
-# Documentation
+---
+title: Documentation
+linkTitle: Documentation
+weight: 20
+description: >-
+  A .NET helper library that standardizes process and data outputs, provides a paginated output container, and includes IQueryable pagination extension methods...
+---
 
 A .NET helper library that standardizes process and data outputs, provides a paginated output container, and
 includes IQueryable pagination extension methods (synchronous & asynchronous).

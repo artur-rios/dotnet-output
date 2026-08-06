@@ -479,3 +479,4 @@ Doxygen/
 /docs/public/
 /docs/resources/_gen/
 *.DS_Store
+/docs/.hugo_build.lock

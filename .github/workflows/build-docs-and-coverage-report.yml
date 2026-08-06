@@ -1,4 +1,4 @@
-﻿name: Build Docs & Coverage Report
+name: Build Docs & Coverage Report
 
 on:
   push:
@@ -29,7 +29,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          submodules: recursive
           fetch-depth: 0
 
       - name: Setup Hugo
@@ -37,6 +36,17 @@ jobs:
         with:
           hugo-version: 'latest'
           extended: true
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          cache: 'npm'
+          cache-dependency-path: docs/package-lock.json
+
+      - name: Install docs dependencies (Docsy theme + PostCSS)
+        run: npm ci
+        working-directory: docs
 
       - name: Build Hugo site
         run: hugo -s docs --environment production --minify --cleanDestinationDir --gc --baseURL "https://artur-rios.github.io/dotnet-output/"
