@@ -1,0 +1,161 @@
+<!doctype html><html itemscope itemtype=http://schema.org/WebPage lang=en class=no-js data-theme-init><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no"><meta name=color-scheme content="light dark"><meta name=theme-color media="(prefers-color-scheme: light)" content="#ffffff"><meta name=theme-color media="(prefers-color-scheme: dark)" content="#000000"><style>html{background:Canvas;color:CanvasText}@media(prefers-color-scheme:dark){html{background:#0b0d12;color:#e6e6e6}}html[data-theme-init] *{transition:none!important}</style><script>(function(){const t="td-color-theme",n=localStorage.getItem(t);let e=n||(window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");e==="auto"&&(e=window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"),document.documentElement.setAttribute("data-bs-theme",e)})()</script><link rel=alternate type=application/rss+xml href=https://artur-rios.github.io/dotnet-output/docs/index.xml><meta name=robots content="index, follow"><title>Documentation | Dotnet Output</title><meta name=description content="A .NET helper library that standardizes process and data outputs, provides a paginated output container, and includes IQueryable pagination extension methods..."><meta property="og:url" content="https://artur-rios.github.io/dotnet-output/docs/"><meta property="og:site_name" content="Dotnet Output"><meta property="og:title" content="Documentation"><meta property="og:description" content="A .NET helper library that standardizes process and data outputs, provides a paginated output container, and includes IQueryable pagination extension methods..."><meta property="og:locale" content="en_us"><meta property="og:type" content="website"><meta itemprop=name content="Documentation"><meta itemprop=description content="A .NET helper library that standardizes process and data outputs, provides a paginated output container, and includes IQueryable pagination extension methods..."><meta itemprop=wordCount content="956"><meta name=twitter:card content="summary"><meta name=twitter:title content="Documentation"><meta name=twitter:description content="A .NET helper library that standardizes process and data outputs, provides a paginated output container, and includes IQueryable pagination extension methods..."><link rel=preload href=/dotnet-output/scss/main.min.550997bd630e34cadce28fffab3bdd879c0f8bd313125cf4fd08902328077df9.css as=style integrity="sha256-VQmXvWMONMrc4o//qzvdh5wPi9MTElz0/QiQIygHffk=" crossorigin=anonymous><link href=/dotnet-output/scss/main.min.550997bd630e34cadce28fffab3bdd879c0f8bd313125cf4fd08902328077df9.css rel=stylesheet integrity="sha256-VQmXvWMONMrc4o//qzvdh5wPi9MTElz0/QiQIygHffk=" crossorigin=anonymous><script src=https://code.jquery.com/jquery-3.7.1.min.js integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin=anonymous></script><script defer src=https://unpkg.com/lunr@2.3.9/lunr.min.js integrity=sha384-203J0SNzyqHby3iU6hzvzltrWi/M41wOP5Gu+BiJMz5nwKykbkUx8Kp7iti0Lpli crossorigin=anonymous></script></head><body class=td-section><header><nav class="td-navbar js-navbar-scroll"><div class="td-navbar-container container-fluid flex-column flex-md-row"><a class=navbar-brand href=/dotnet-output/><span class="navbar-brand__logo navbar-logo"></span><span class=navbar-brand__name>Dotnet Output</span></a><div class="td-navbar__main td-navbar-nav-scroll td-navbar-nav-scroll--indicator" id=main_navbar><div class="scroll-indicator scroll-left"></div><ul class=navbar-nav><li class=nav-item><a class=nav-link href=/dotnet-output/docs/><span>Documentation</span></a></li><li class=nav-item><a class=nav-link href=/dotnet-output/coverage-report/><span>Test Coverage</span></a></li><li class=nav-item><a class=nav-link href=https://github.com/artur-rios/dotnet-output target=_blank rel=noopener><i class="fab fa-github"></i><span>GitHub</span></a></li><li class="nav-item td-navbar__light-dark-menu"><div class="td-light-dark-menu dropdown"><svg class="d-none"><symbol id="check2" viewBox="0 0 16 16"><path d="M13.854 3.646a.5.5.0 010 .708l-7 7a.5.5.0 01-.708.0l-3.5-3.5a.5.5.0 11.708-.708L6.5 10.293l6.646-6.647a.5.5.0 01.708.0z"/></symbol><symbol id="circle-half" viewBox="0 0 16 16"><path d="M8 15A7 7 0 108 1v14zm0 1A8 8 0 118 0a8 8 0 010 16z"/></symbol><symbol id="moon-stars-fill" viewBox="0 0 16 16"><path d="M6 .278a.768.768.0 01.08.858 7.208 7.208.0 00-.878 3.46c0 4.021 3.278 7.277 7.318 7.277.527.0 1.04-.055 1.533-.16a.787.787.0 01.81.316.733.733.0 01-.031.893A8.349 8.349.0 018.344 16C3.734 16 0 12.286.0 7.71.0 4.266 2.114 1.312 5.124.06A.752.752.0 016 .278z"/><path d="M10.794 3.148a.217.217.0 01.412.0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217.0 010 .412l-1.162.387A1.734 1.734.0 0011.593 7.69l-.387 1.162a.217.217.0 01-.412.0l-.387-1.162A1.734 1.734.0 009.31 6.593l-1.162-.387a.217.217.0 010-.412l1.162-.387a1.734 1.734.0 001.097-1.097l.387-1.162zM13.863.099a.145.145.0 01.274.0l.258.774c.115.346.386.617.732.732l.774.258a.145.145.0 010 .274l-.774.258a1.156 1.156.0 00-.732.732l-.258.774a.145.145.0 01-.274.0l-.258-.774a1.156 1.156.0 00-.732-.732l-.774-.258a.145.145.0 010-.274l.774-.258c.346-.115.617-.386.732-.732L13.863.1z"/></symbol><symbol id="sun-fill" viewBox="0 0 16 16"><path d="M8 12a4 4 0 100-8 4 4 0 000 8zM8 0a.5.5.0 01.5.5v2a.5.5.0 01-1 0v-2A.5.5.0 018 0zm0 13a.5.5.0 01.5.5v2a.5.5.0 01-1 0v-2A.5.5.0 018 13zm8-5a.5.5.0 01-.5.5h-2a.5.5.0 010-1h2a.5.5.0 01.5.5zM3 8a.5.5.0 01-.5.5h-2a.5.5.0 010-1h2A.5.5.0 013 8zm10.657-5.657a.5.5.0 010 .707l-1.414 1.415a.5.5.0 11-.707-.708l1.414-1.414a.5.5.0 01.707.0zm-9.193 9.193a.5.5.0 010 .707L3.05 13.657a.5.5.0 01-.707-.707l1.414-1.414a.5.5.0 01.707.0zm9.193 2.121a.5.5.0 01-.707.0l-1.414-1.414a.5.5.0 01.707-.707l1.414 1.414a.5.5.0 010 .707zM4.464 4.465a.5.5.0 01-.707.0L2.343 3.05a.5.5.0 11.707-.707l1.414 1.414a.5.5.0 010 .708z"/></symbol></svg>
+<button class="btn btn-link nav-link dropdown-toggle d-flex align-items-center" id=bd-theme type=button aria-expanded=false data-bs-toggle=dropdown aria-label="Toggle theme (auto)">
+<svg class="bi my-1 theme-icon-active"><use href="#circle-half"/></svg></button><ul class=dropdown-menu aria-labelledby=bd-theme><li><button type=button class="dropdown-item d-flex align-items-center" data-bs-theme-value=light aria-pressed=false>
+<svg class="bi me-2 opacity-50"><use href="#sun-fill"/></svg>
+Light
+<svg class="bi ms-auto d-none"><use href="#check2"/></svg></button></li><li><button type=button class="dropdown-item d-flex align-items-center" data-bs-theme-value=dark aria-pressed=false>
+<svg class="bi me-2 opacity-50"><use href="#moon-stars-fill"/></svg>
+Dark
+<svg class="bi ms-auto d-none"><use href="#check2"/></svg></button></li><li><button type=button class="dropdown-item d-flex align-items-center active" data-bs-theme-value=auto aria-pressed=true>
+<svg class="bi me-2 opacity-50"><use href="#circle-half"/></svg>
+Auto
+<svg class="bi ms-auto d-none"><use href="#check2"/></svg></button></li></ul></div></li></ul><div class="scroll-indicator scroll-right"></div></div><div class="td-navbar__search d-none d-lg-block"><div class="td-search td-search--offline"><div class=td-search__icon></div><input type=search name=q class="td-search__input form-control" placeholder='Search this site…' aria-label='Search this site…' autocomplete=off data-offline-search-index-json-src=/dotnet-output/offline-search-index.0a62d2c8bc013c00141d267bb8694162.json data-offline-search-base-href=/ data-offline-search-max-results=10></div></div></div></nav></header><div class="container-fluid td-outer"><div class=td-main data-bs-spy=scroll data-bs-target=.td-toc data-bs-root-margin="0px 0px -10%"><div class="row flex-xl-nowrap"><aside class="col-12 col-md-3 col-xl-2 td-sidebar d-print-none"><div id=td-sidebar-menu class=td-sidebar__inner><form class="td-sidebar__search d-flex align-items-center"><div class="td-search td-search--offline"><div class=td-search__icon></div><input type=search name=q class="td-search__input form-control" placeholder='Search this site…' aria-label='Search this site…' autocomplete=off data-offline-search-index-json-src=/dotnet-output/offline-search-index.0a62d2c8bc013c00141d267bb8694162.json data-offline-search-base-href=/ data-offline-search-max-results=10></div><button class="btn btn-link td-sidebar__toggle" type=button data-bs-toggle=collapse data-bs-target=#td-section-nav aria-controls=td-section-nav aria-expanded=false aria-label="Toggle section navigation"></button></form><nav class="td-sidebar-nav collapse foldable-nav" id=td-section-nav><ul class="td-sidebar-nav__section pe-md-3 ul-0"><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child active-path" id=m-dotnet-outputdocs-li><a href=/dotnet-output/docs/ class="align-left ps-0 active td-sidebar-link td-sidebar-link__section tree-root" id=m-dotnet-outputdocs><span class=td-sidebar-nav-active-item>Documentation</span></a></li></ul></nav></div></aside><aside class=td-sidebar-toc><div class="td-page-meta ms-2 pb-1 pt-2 mb-0"><a href=https://github.com/artur-rios/dotnet-output/tree/main/docs/content/en/docs/_index.md class="td-page-meta--view td-page-meta__view" target=_blank rel=noopener><i class="fa-solid fa-file-lines fa-fw"></i> View page source</a>
+<a href=https://github.com/artur-rios/dotnet-output/edit/main/docs/content/en/docs/_index.md class="td-page-meta--edit td-page-meta__edit" target=_blank rel=noopener><i class="fa-solid fa-pen-to-square fa-fw"></i> Edit this page</a>
+<a href="https://github.com/artur-rios/dotnet-output/new/main/docs/content/en/docs?filename=change-me.md&amp;value=---%0Atitle%3A+%22Long+Page+Title%22%0AlinkTitle%3A+%22Short+Nav+Title%22%0Aweight%3A+100%0Adescription%3A+%3E-%0A+++++Page+description+for+heading+and+indexes.%0A---%0A%0A%23%23+Heading%0A%0AEdit+this+template+to+create+your+new+page.%0A%0A%2A+Give+it+a+good+name%2C+ending+in+%60.md%60+-+e.g.+%60get-started.md%60%0A%2A+Edit+the+%22front+matter%22+section+at+the+top+of+the+page+%28weight+controls+how+its+ordered+amongst+other+pages+in+the+same+directory%3B+lowest+number+first%29.%0A%2A+Add+a+good+commit+message+at+the+bottom+of+the+page+%28%3C80+characters%3B+use+the+extended+description+field+for+more+detail%29.%0A%2A+Create+a+new+branch+so+you+can+preview+your+new+file+and+request+a+review+via+Pull+Request.%0A" class="td-page-meta--child td-page-meta__child" target=_blank rel=noopener><i class="fa-solid fa-pen-to-square fa-fw"></i> Create child page</a>
+<a href="https://github.com/artur-rios/dotnet-output/issues/new?title=Documentation" class="td-page-meta--issue td-page-meta__issue" target=_blank rel=noopener><i class="fa-solid fa-list-check fa-fw"></i> Create documentation issue</a></div><div class=td-toc data-proofer-ignore><div class=td-toc-title><span class=td-toc-title__text>On this page</span>
+<a class=td-toc-title__link title="Top of page" href=#></a></div><nav id=TableOfContents><ul><li><a href=#contents>Contents</a></li><li><a href=#overview>Overview</a></li><li><a href=#classes>Classes</a></li><li><a href=#usage-examples>Usage examples</a><ul><li><a href=#basic-processoutput--dataoutput>Basic (ProcessOutput / DataOutput)</a></li><li><a href=#paginated-example-synchronous>Paginated example (synchronous)</a></li><li><a href=#paginated-example-async-ef-core>Paginated example (async, EF Core)</a></li></ul></li><li><a href=#how-to-use-in-your-project>How to use in your project</a></li><li><a href=#api-notes--gotchas>API notes & gotchas</a></li><li><a href=#class-diagram>Class diagram</a></li><li><a href=#versioning>Versioning</a></li><li><a href=#build-test-and-publish>Build, test and publish</a></li><li><a href=#legal-details>Legal Details</a></li></ul></nav></div></aside><main class="col-12 col-md-9 col-xl-8 ps-md-5" role=main><nav aria-label=breadcrumb class="td-breadcrumbs td-breadcrumbs__single"><ol class=breadcrumb><li class="breadcrumb-item active" aria-current=page>Documentation</li></ol></nav><div class=td-content><h1>Documentation</h1><div class=lead>A .NET helper library that standardizes process and data outputs, provides a paginated output container, and includes IQueryable pagination extension methods&mldr;</div><header class=article-meta></header><p>A .NET helper library that standardizes process and data outputs, provides a paginated output container, and
+includes IQueryable pagination extension methods (synchronous & asynchronous).</p><h2 id=contents>Contents</h2><ul><li>Project overview</li><li>Classes<ul><li><code>ProcessOutput</code></li><li><code>DataOutput</code></li><li><code>PaginatedOutput</code></li><li><code>CustomException</code></li><li><code>PaginatedOutputExtensions</code> (extension methods)</li></ul></li><li>Usage examples</li><li>Add as a Git submodule and reference</li><li>Mermaid class diagram</li><li>Notes</li></ul><hr><h2 id=overview>Overview</h2><p><code>ArturRios.Output</code> provides lightweight types to represent the result of operations in a consistent way. Typical use
+cases:</p><ul><li>Return success/failure information together with messages and errors</li><li>Return typed data payloads with fluent helpers</li><li>Return paginated list results and help paginate <code>IQueryable</code> sources (works with EF Core or in-memory LINQ)</li></ul><p>The library has no external runtime dependencies apart from <code>Microsoft.EntityFrameworkCore</code> when you call the EF-aware
+<code>PaginateAsync</code> extension (the extension is written to work with both IQueryables that support async and ones that
+don&rsquo;t).</p><h2 id=classes>Classes</h2><ul><li><p><code>ProcessOutput</code></p><ul><li>Purpose: Base container for operation results. Captures messages, errors, timestamp and a convenience <code>Success</code>
+flag.</li><li>Key members:<ul><li><code>List&lt;string> Messages { get; }</code></li><li><code>List&lt;string> Errors { get; }</code></li><li><code>DateTime Timestamp { get; }</code> (UTC)</li><li><code>bool Success { get; }</code> (true when no errors)</li><li>Fluent helpers: <code>WithError</code>, <code>WithErrors</code>, <code>WithMessage</code>, <code>WithMessages</code></li><li>Add helpers: <code>AddError</code>, <code>AddErrors</code>, <code>AddMessage</code>, <code>AddMessages</code></li><li>Static factory: <code>ProcessOutput.New</code></li></ul></li></ul></li><li><p><code>DataOutput&lt;T></code> : <code>ProcessOutput</code></p><ul><li>Purpose: Holds a typed data payload plus everything <code>ProcessOutput</code> provides.</li><li>Key members:<ul><li><code>T? Data { get; protected set; }</code></li><li>Fluent API: <code>WithData(T)</code>, <code>WithError(string)</code>, <code>WithErrors(IEnumerable&lt;string>)</code>,
+<code>WithMessage(string)</code>, <code>WithMessages(IEnumerable&lt;string>)</code></li><li>Static factory: <code>DataOutput&lt;T>.New</code></li></ul></li></ul></li><li><p><code>PaginatedOutput&lt;T></code> : <code>DataOutput&lt;List&lt;T>></code></p><ul><li>Purpose: Represents a paginated result set containing <code>List&lt;T></code> as the payload.</li><li>Key members:<ul><li><code>int PageNumber { get; set; }</code></li><li><code>int PageSize { get; }</code> (the requested page size, set via <code>WithPagination</code>)</li><li><code>int TotalItems { get; set; }</code></li><li><code>int TotalPages { get; }</code> (computed as Ceil(TotalItems / PageSize), or 0 when PageSize is 0)</li><li>Helpers to build: <code>WithPagination(int pageNumber, int pageSize, int totalItems)</code>, <code>WithData(List&lt;T>)</code>, <code>WithData(T)</code>,
+<code>WithEmptyData()</code>, <code>AddItem(T)</code>, <code>AddItems(IEnumerable&lt;T>)</code></li><li>Fluent <code>WithMessage</code> / <code>WithError</code> overloads preserved.</li><li>Static factory: <code>PaginatedOutput&lt;T>.New</code></li></ul></li></ul></li><li><p><code>CustomException</code> (abstract)</p><ul><li>Purpose: Base exception type wrapping an array of messages. Derive from it to create domain-specific exceptions
+that carry multiple messages.</li><li>Key members:<ul><li>Constructor that accepts <code>string[] messages</code> and builds the base <code>Exception</code> message by joining them</li><li><code>string[] Messages { get; }</code></li></ul></li></ul></li><li><p><code>PaginatedOutputExtensions</code> (static)</p><ul><li>Purpose: Extension methods for <code>IQueryable&lt;T></code> to paginate a query and return a <code>PaginatedOutput&lt;T></code>.</li><li>Methods:<ul><li><code>Task&lt;PaginatedOutput&lt;T>> PaginateAsync&lt;T>(this IQueryable&lt;T> query, int pageNumber, int pageSize, Expression&lt;Func&lt;T, object?>>? orderBy = null, CancellationToken cancellationToken = default)</code><ul><li>Uses EF Core async if the query provider supports <code>IAsyncQueryProvider</code>; otherwise falls back to
+synchronous <code>ToList()</code>.</li></ul></li><li><code>PaginatedOutput&lt;T> Paginate&lt;T>(this IQueryable&lt;T> query, int pageNumber, int pageSize, Expression&lt;Func&lt;T, object?>>? orderBy = null)</code><ul><li>Synchronous variant. When provided, <code>orderBy</code> is applied.</li></ul></li></ul></li></ul></li></ul><h2 id=usage-examples>Usage examples</h2><h3 id=basic-processoutput--dataoutput>Basic (ProcessOutput / DataOutput)</h3><div class=highlight><pre tabindex=0 class=chroma><code class=language-csharp data-lang=csharp><span class=line><span class=cl><span class=k>using</span> <span class=nn>ArturRios.Output</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>// Simple success response with a message</span>
+</span></span><span class=line><span class=cl><span class=kt>var</span> <span class=n>p</span> <span class=p>=</span> <span class=n>ProcessOutput</span><span class=p>.</span><span class=n>New</span><span class=p>.</span><span class=n>WithMessage</span><span class=p>(</span><span class=s>&#34;Operation completed&#34;</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>// Data output</span>
+</span></span><span class=line><span class=cl><span class=kt>var</span> <span class=n>d</span> <span class=p>=</span> <span class=n>DataOutput</span><span class=p>&lt;</span><span class=kt>int</span><span class=p>&gt;.</span><span class=n>New</span>
+</span></span><span class=line><span class=cl>    <span class=p>.</span><span class=n>WithData</span><span class=p>(</span><span class=m>42</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=p>.</span><span class=n>WithMessage</span><span class=p>(</span><span class=s>&#34;Value computed&#34;</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>if</span> <span class=p>(!</span><span class=n>d</span><span class=p>.</span><span class=n>Success</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// inspect d.Errors</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></div><h3 id=paginated-example-synchronous>Paginated example (synchronous)</h3><div class=highlight><pre tabindex=0 class=chroma><code class=language-csharp data-lang=csharp><span class=line><span class=cl><span class=k>using</span> <span class=nn>ArturRios.Output</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>IQueryable</span><span class=p>&lt;</span><span class=n>MyEntity</span><span class=p>&gt;</span> <span class=n>query</span> <span class=p>=</span> <span class=p>...;</span> <span class=c1>// your LINQ or EF Core query</span>
+</span></span><span class=line><span class=cl><span class=kt>int</span> <span class=n>pageNumber</span> <span class=p>=</span> <span class=m>1</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=kt>int</span> <span class=n>pageSize</span> <span class=p>=</span> <span class=m>20</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kt>var</span> <span class=n>page</span> <span class=p>=</span> <span class=n>query</span><span class=p>.</span><span class=n>Paginate</span><span class=p>(</span><span class=n>pageNumber</span><span class=p>,</span> <span class=n>pageSize</span><span class=p>,</span> <span class=n>e</span> <span class=p>=&gt;</span> <span class=n>e</span><span class=p>.</span><span class=n>CreatedAt</span><span class=p>);</span>
+</span></span><span class=line><span class=cl><span class=c1>// page is PaginatedOutput&lt;MyEntity&gt;</span>
+</span></span><span class=line><span class=cl><span class=kt>var</span> <span class=n>items</span> <span class=p>=</span> <span class=n>page</span><span class=p>.</span><span class=n>Data</span><span class=p>;</span> <span class=c1>// List&lt;MyEntity&gt;</span>
+</span></span></code></pre></div><h3 id=paginated-example-async-ef-core>Paginated example (async, EF Core)</h3><div class=highlight><pre tabindex=0 class=chroma><code class=language-csharp data-lang=csharp><span class=line><span class=cl><span class=k>using</span> <span class=nn>ArturRios.Output</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kt>var</span> <span class=n>page</span> <span class=p>=</span> <span class=k>await</span> <span class=n>dbContext</span><span class=p>.</span><span class=n>Set</span><span class=p>&lt;</span><span class=n>MyEntity</span><span class=p>&gt;()</span>
+</span></span><span class=line><span class=cl>    <span class=p>.</span><span class=n>Where</span><span class=p>(</span><span class=n>e</span> <span class=p>=&gt;</span> <span class=n>e</span><span class=p>.</span><span class=n>IsActive</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=p>.</span><span class=n>PaginateAsync</span><span class=p>(</span><span class=n>pageNumber</span><span class=p>:</span> <span class=m>2</span><span class=p>,</span> <span class=n>pageSize</span><span class=p>:</span> <span class=m>50</span><span class=p>,</span> <span class=n>orderBy</span><span class=p>:</span> <span class=n>e</span> <span class=p>=&gt;</span> <span class=n>e</span><span class=p>.</span><span class=n>CreatedAt</span><span class=p>,</span> <span class=n>cancellationToken</span><span class=p>:</span> <span class=n>ct</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kt>var</span> <span class=n>items</span> <span class=p>=</span> <span class=n>page</span><span class=p>.</span><span class=n>Data</span><span class=p>;</span> <span class=c1>// List&lt;MyEntity&gt;</span>
+</span></span></code></pre></div><h2 id=how-to-use-in-your-project>How to use in your project</h2><p>Add as a Git submodule and reference the project in your solution:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl><span class=c1># from your solution repository root</span>
+</span></span><span class=line><span class=cl>git submodule add &lt;git-url-of-this-repo&gt; external/dotnet-output
+</span></span><span class=line><span class=cl>git submodule update --init --recursive
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># then add the csproj to your solution (adjust path)</span>
+</span></span><span class=line><span class=cl>dotnet sln add external/dotnet-output/src/ArturRios.Output.csproj
+</span></span></code></pre></div><p>This keeps the library as a normal project dependency and allows debugging into its code.</p><h2 id=api-notes--gotchas>API notes & gotchas</h2><ul><li><p><strong>Serialization.</strong> The output types round-trip under both <code>System.Text.Json</code> and <code>Newtonsoft.Json</code>,
+including payloads written by one and read by the other. Every serialized member — <code>Data</code>,
+<code>Messages</code>, <code>Errors</code>, <code>Timestamp</code>, <code>PageNumber</code>, <code>PageSize</code>, <code>TotalItems</code> — has a public getter
+and setter, which both serializers handle by default, so the library carries no serializer
+attributes and no serializer dependency. <code>Success</code> and <code>TotalPages</code> are computed: they are
+written out, and ignored on read. The <code>AddX</code> / <code>WithX</code> helpers remain the intended way to build
+an output; the setters exist so serializers can populate one.</p></li><li><p><code>Messages</code> and <code>Errors</code> are never <code>null</code>. Assigning <code>null</code> — which is what a deserializer does
+when the payload carries an explicit <code>"messages": null</code> — resets them to empty lists, so
+<code>Success</code> and the <code>AddX</code> helpers stay safe on hostile or partial input.</p></li><li><p><code>PaginatedOutput.PageSize</code> is the page size requested by the caller, not the number of items in the current page —
+the last page usually holds fewer items than that. <code>TotalItems</code> is the total number of items across all pages, and
+<code>TotalPages</code> is computed as <code>Ceiling(TotalItems / PageSize)</code>, or <code>0</code> when <code>PageSize</code> is <code>0</code> (that is, when
+<code>WithPagination</code> has not been called).</p></li></ul><h2 id=class-diagram>Class diagram</h2><p>Below is a mermaid class diagram representing the public classes in this project. You can paste this into any
+mermaid-enabled renderer (for example GitHub markdown with mermaid enabled, or live editors).</p><pre class=mermaid>classDiagram
+    class ProcessOutput {
+        &#43;Messages: List_string
+        &#43;Errors: List_string
+        &#43;Timestamp: DateTime
+        &#43;Success: bool
+    }
+
+    class DataOutput_T {
+        &#43;Data: T_optional
+    }
+
+    class PaginatedOutput_T {
+        &#43;PageNumber: int
+        &#43;PageSize: int
+        &#43;TotalItems: int
+        &#43;TotalPages: int
+    }
+
+    class CustomException {
+        &#43;Messages: string_array
+    }
+
+    class PaginatedOutputExtensions {
+        &#43;PaginateAsync()
+        &#43;Paginate()
+    }
+
+    DataOutput_T --|&gt; ProcessOutput
+    PaginatedOutput_T --|&gt; DataOutput_T
+    PaginatedOutputExtensions ..&gt; PaginatedOutput_T: uses</pre><h2 id=versioning>Versioning</h2><p>Semantic Versioning (SemVer). Breaking changes result in a new major version. New methods or non-breaking behavior
+changes increment the minor version; fixes or tweaks increment the patch.</p><h2 id=build-test-and-publish>Build, test and publish</h2><p>Use the official <a href=https://learn.microsoft.com/en-us/dotnet/core/tools/>.NET CLI</a> to build, test and publish the project and Git for source control.
+If you want, optional helper toolsets I built to facilitate these tasks are available:</p><ul><li><a href=https://github.com/artur-rios/dotnet-tools>Dotnet Tools</a></li><li><a href=https://github.com/artur-rios/python-dotnet-tools>Python Dotnet Tools</a></li></ul><h2 id=legal-details>Legal Details</h2><p>This project is licensed under the <a href=https://en.wikipedia.org/wiki/MIT_License>MIT License</a>. A copy of the license is available at <a href=https://github.com/artur-rios/dotnet-output/blob/main/LICENSE>LICENSE</a> in the repository.</p><div class=section-index></div></div></main></div></div><footer class="td-footer row d-print-none"><div class=container-fluid><div class="row mx-md-2"><div class="td-footer__left col-6 col-sm-4 order-sm-1"><ul class=td-footer__links-list><li class=td-footer__links-item data-bs-toggle=tooltip title=Author aria-label=Author><a href=https://www.artur-rios.tech/ aria-label=Author target=_blank rel=noopener><i class="fa fa-user"></i></a></li></ul></div><div class="td-footer__right col-6 col-sm-4 order-sm-3"><ul class=td-footer__links-list><li class=td-footer__links-item data-bs-toggle=tooltip title=GitHub aria-label=GitHub><a href=https://github.com/artur-rios/dotnet-output aria-label=GitHub target=_blank rel=noopener><i class="fab fa-github"></i></a></li></ul></div><div class="td-footer__center col-12 col-sm-4 py-2 order-sm-2"><span class=td-footer__copyright>&copy;
+2026
+<span class=td-footer__authors>Artur Rios | <a href=https://github.com/artur-rios/dotnet-output/blob/main/LICENSE>MIT License</a></span></span><span class=td-footer__all_rights_reserved>All Rights Reserved</span></div></div></div></footer></div><script type=module async>
+  import mermaid from "https:\/\/cdn.jsdelivr.net\/npm\/mermaid@latest\/dist\/mermaid.esm.min.mjs";
+
+  (function ($) {
+    if ($('.mermaid').length == 0) {
+      mermaid.initialize({ startOnLoad: false });
+      return;
+    }
+
+    var params = {};
+
+    
+    
+    var norm = function (defaultConfig, params) {
+      var result = {};
+      for (const key in defaultConfig) {
+        const keyLower = key.toLowerCase();
+        if (defaultConfig.hasOwnProperty(key) && params.hasOwnProperty(keyLower)) {
+          if (typeof defaultConfig[key] === "object") {
+            result[key] = norm(defaultConfig[key], params[keyLower]);
+          } else {
+            result[key] = params[keyLower];
+          }
+        }
+      }
+      return result;
+    };
+
+    var settings = norm(mermaid.mermaidAPI.defaultConfig, params);
+    settings.startOnLoad = true;
+    if ($('html[data-bs-theme="dark"]').length) {
+      settings.theme = 'dark';
+    }
+    mermaid.initialize(settings);
+
+    
+    const lightDarkModeThemeChangeHandler = function (mutationsList, observer) {
+      for (const mutation of mutationsList) {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'data-bs-theme') {
+          
+          
+          
+          location.reload();
+        }
+      }
+    };
+
+    const observer = new MutationObserver(lightDarkModeThemeChangeHandler);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-bs-theme']
+    });
+    
+
+  })(jQuery);
+</script><script src=/dotnet-output/js/main.min.0a5c5582cffd2efa07a3604a2a7d3f930a2594b6486c939d4b10485316b8017d.js integrity="sha256-ClxVgs/9LvoHo2BKKn0/kwollLZIbJOdSxBIUxa4AX0=" crossorigin=anonymous></script><script defer src=/dotnet-output/js/click-to-copy.min.24576ff9fe9f85bb1948ecae52ce227cafce53757a3ad52301f2a79260f6b97d.js integrity="sha256-JFdv+f6fhbsZSOyuUs4ifK/OU3V6OtUjAfKnkmD2uX0=" crossorigin=anonymous></script><script src=/dotnet-output/js/tabpane-persist.js></script></body></html>
