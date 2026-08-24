@@ -2,6 +2,7 @@ using System.Text.Json;
 
 namespace ArturRios.Output.Tests;
 
+[Trait("Category", "Unit")]
 public class PaginatedOutputTests
 {
     [Fact]

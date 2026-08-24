@@ -1,5 +1,6 @@
 namespace ArturRios.Output.Tests;
 
+[Trait("Category", "Unit")]
 public class ProcessOutputTests
 {
     [Fact]
@@ -144,5 +145,68 @@ public class ProcessOutputTests
         Assert.Equal(2, output.Messages.Count);
         Assert.Equal(2, output.Errors.Count);
         Assert.Equal(DateTime.UtcNow.Date, output.Timestamp.Date);
+    }
+
+    [Fact]
+    public void GivenNullErrorCollection_WhenAddingErrors_ThenTheCallIsIgnored()
+    {
+        var output = ProcessOutput.New;
+
+        output.AddErrors(null);
+
+        Assert.Empty(output.Errors);
+        Assert.True(output.Success);
+    }
+
+    [Fact]
+    public void GivenNullMessageCollection_WhenAddingMessages_ThenTheCallIsIgnored()
+    {
+        var output = ProcessOutput.New;
+
+        output.AddMessages(null);
+
+        Assert.Empty(output.Messages);
+    }
+
+    [Fact]
+    public void GivenNullErrorCollection_WhenUsingTheFluentHelper_ThenTheSameInstanceComesBackUnchanged()
+    {
+        var output = ProcessOutput.New;
+
+        var returned = output.WithErrors(null);
+
+        Assert.Same(output, returned);
+        Assert.True(returned.Success);
+    }
+
+    [Fact]
+    public void GivenNullMessageCollection_WhenUsingTheFluentHelper_ThenTheSameInstanceComesBackUnchanged()
+    {
+        var output = ProcessOutput.New;
+
+        var returned = output.WithMessages(null);
+
+        Assert.Same(output, returned);
+        Assert.Empty(returned.Messages);
+    }
+
+    [Fact]
+    public void GivenTwoAccessesToTheFactory_WhenCreating_ThenDistinctInstancesComeBack()
+    {
+        var first = ProcessOutput.New;
+        var second = ProcessOutput.New;
+
+        Assert.NotSame(first, second);
+    }
+
+    [Fact]
+    public void GivenAnOutput_WhenCreated_ThenTheTimestampIsUtcAndRecent()
+    {
+        var before = DateTime.UtcNow;
+
+        var output = ProcessOutput.New;
+
+        Assert.Equal(DateTimeKind.Utc, output.Timestamp.Kind);
+        Assert.InRange(output.Timestamp, before.AddSeconds(-1), DateTime.UtcNow.AddSeconds(1));
     }
 }

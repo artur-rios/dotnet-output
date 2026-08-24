@@ -123,7 +123,7 @@ public class PaginatedOutput<T> : DataOutput<List<T>>
     /// Fluent helper to add multiple errors on the current instance.
     /// </summary>
     /// <param name="errors">Errors to add.</param>
-    public new PaginatedOutput<T> WithErrors(IEnumerable<string> errors)
+    public new PaginatedOutput<T> WithErrors(IEnumerable<string>? errors)
     {
         AddErrors(errors);
 
@@ -145,7 +145,7 @@ public class PaginatedOutput<T> : DataOutput<List<T>>
     /// Fluent helper to add multiple informational messages on the current instance.
     /// </summary>
     /// <param name="messages">Messages to add.</param>
-    public new PaginatedOutput<T> WithMessages(IEnumerable<string> messages)
+    public new PaginatedOutput<T> WithMessages(IEnumerable<string>? messages)
     {
         AddMessages(messages);
 

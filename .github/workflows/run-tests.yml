@@ -22,11 +22,12 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  test:
+  unit-tests:
+    name: Unit tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v5
@@ -40,4 +41,51 @@ jobs:
         run: dotnet build src/ArturRios.Output.sln --configuration Release --no-restore
 
       - name: Run unit tests
-        run: dotnet test src/ArturRios.Output.sln --configuration Release --no-build
+        run: >-
+          dotnet test src/ArturRios.Output.sln --configuration Release --no-build
+          --filter "Category=Unit"
+          --logger "console;verbosity=normal"
+          --logger "trx;LogFileName=unit-tests.trx"
+          --results-directory artifacts/test-results/unit
+
+      - name: Upload unit test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-results
+          path: artifacts/test-results/unit
+          if-no-files-found: ignore
+
+  functional-tests:
+    name: Functional tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore src/ArturRios.Output.sln
+
+      - name: Build
+        run: dotnet build src/ArturRios.Output.sln --configuration Release --no-restore
+
+      - name: Run functional tests
+        run: >-
+          dotnet test src/ArturRios.Output.sln --configuration Release --no-build
+          --filter "Category=Functional"
+          --logger "console;verbosity=normal"
+          --logger "trx;LogFileName=functional-tests.trx"
+          --results-directory artifacts/test-results/functional
+
+      - name: Upload functional test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: functional-test-results
+          path: artifacts/test-results/functional
+          if-no-files-found: ignore
