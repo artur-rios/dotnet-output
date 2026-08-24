@@ -2,6 +2,7 @@ using ArturRios.Output.Tests.Mock;
 
 namespace ArturRios.Output.Tests;
 
+[Trait("Category", "Unit")]
 public class Tests
 {
     [Fact]

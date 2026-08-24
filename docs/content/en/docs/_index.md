@@ -12,6 +12,7 @@ includes IQueryable pagination extension methods (synchronous & asynchronous).
 ## Contents
 
 - Project overview
+- Installation
 - Classes
   - `ProcessOutput`
   - `DataOutput`
@@ -19,7 +20,7 @@ includes IQueryable pagination extension methods (synchronous & asynchronous).
   - `CustomException`
   - `PaginatedOutputExtensions` (extension methods)
 - Usage examples
-- Add as a Git submodule and reference
+- Testing
 - Mermaid class diagram
 - Notes
 
@@ -38,6 +39,26 @@ The library has no external runtime dependencies apart from `Microsoft.EntityFra
 `PaginateAsync` extension (the extension is written to work with both IQueryables that support async and ones that
 don't).
 
+## Installation
+
+```bash
+dotnet add package ArturRios.Output
+```
+
+The package targets `net10.0`.
+
+Alternatively, add the repository as a Git submodule and reference the project directly, which lets you
+step into the library's own code while debugging:
+
+```bash
+# from your solution repository root
+git submodule add https://github.com/artur-rios/dotnet-output.git external/dotnet-output
+git submodule update --init --recursive
+
+# then add the csproj to your solution (adjust path)
+dotnet sln add external/dotnet-output/src/ArturRios.Output.csproj
+```
+
 ## Classes
 
 - `ProcessOutput`
@@ -50,15 +71,18 @@ don't).
     - `DateTime Timestamp { get; }` (UTC)
     - `bool Success { get; }` (true when no errors)
     - Fluent helpers: `WithError`, `WithErrors`, `WithMessage`, `WithMessages`
-    - Add helpers: `AddError`, `AddErrors`, `AddMessage`, `AddMessages`
+    - Add helpers: `AddError`, `AddErrors`, `AddMessage`, `AddMessages` — every one of them ignores
+          `null`, empty and whitespace-only entries, and `AddErrors` / `AddMessages` ignore a `null`
+          collection outright
     - Static factory: `ProcessOutput.New`
 
 - `DataOutput<T>` : `ProcessOutput`
 
   - Purpose: Holds a typed data payload plus everything `ProcessOutput` provides.
   - Key members:
-    - `T? Data { get; protected set; }`
-    - Fluent API: `WithData(T)`, `WithError(string)`, `WithErrors(IEnumerable<string>)`,
+    - `T? Data { get; set; }`
+    - Add helper: `AddData(T)`
+    - Fluent API: `WithData(T)`, `WithError(string)`, `WithErrors(IEnumerable<string>?)`,
             `WithMessage(string)`, `WithMessages(IEnumerable<string>)`
     - Static factory: `DataOutput<T>.New`
 
@@ -67,7 +91,7 @@ don't).
   - Purpose: Represents a paginated result set containing `List<T>` as the payload.
   - Key members:
     - `int PageNumber { get; set; }`
-    - `int PageSize { get; }` (the requested page size, set via `WithPagination`)
+    - `int PageSize { get; set; }` (the requested page size, set via `WithPagination`)
     - `int TotalItems { get; set; }`
     - `int TotalPages { get; }` (computed as Ceil(TotalItems / PageSize), or 0 when PageSize is 0)
     - Helpers to build: `WithPagination(int pageNumber, int pageSize, int totalItems)`, `WithData(List<T>)`, `WithData(T)`,
@@ -86,10 +110,10 @@ don't).
 - `PaginatedOutputExtensions` (static)
   - Purpose: Extension methods for `IQueryable<T>` to paginate a query and return a `PaginatedOutput<T>`.
   - Methods:
-    - `Task<PaginatedOutput<T>> PaginateAsync<T>(this IQueryable<T> query, int pageNumber, int pageSize, Expression<Func<T, object?>>? orderBy = null, CancellationToken cancellationToken = default)`
+    - `Task<PaginatedOutput<T>> PaginateAsync<T>(this IQueryable<T> query, int pageNumber, int pageSize, Expression<Func<T, object?>>? orderBy = null, int? totalCount = null, CancellationToken cancellationToken = default)`
       - Uses EF Core async if the query provider supports `IAsyncQueryProvider`; otherwise falls back to
                 synchronous `ToList()`.
-    - `PaginatedOutput<T> Paginate<T>(this IQueryable<T> query, int pageNumber, int pageSize, Expression<Func<T, object?>>? orderBy = null)`
+    - `PaginatedOutput<T> Paginate<T>(this IQueryable<T> query, int pageNumber, int pageSize, Expression<Func<T, object?>>? orderBy = null, int? totalCount = null)`
       - Synchronous variant. When provided, `orderBy` is applied.
 
 ## Usage examples
@@ -138,21 +162,6 @@ var page = await dbContext.Set<MyEntity>()
 var items = page.Data; // List<MyEntity>
 ```
 
-## How to use in your project
-
-Add as a Git submodule and reference the project in your solution:
-
-```bash
-# from your solution repository root
-git submodule add <git-url-of-this-repo> external/dotnet-output
-git submodule update --init --recursive
-
-# then add the csproj to your solution (adjust path)
-dotnet sln add external/dotnet-output/src/ArturRios.Output.csproj
-```
-
-This keeps the library as a normal project dependency and allows debugging into its code.
-
 ## API notes & gotchas
 
 - **Serialization.** The output types round-trip under both `System.Text.Json` and `Newtonsoft.Json`,
@@ -171,6 +180,20 @@ This keeps the library as a normal project dependency and allows debugging into 
     the last page usually holds fewer items than that. `TotalItems` is the total number of items across all pages, and
     `TotalPages` is computed as `Ceiling(TotalItems / PageSize)`, or `0` when `PageSize` is `0` (that is, when
     `WithPagination` has not been called).
+
+- **Argument normalisation.** `Paginate` and `PaginateAsync` clamp `pageNumber` and `pageSize` to a
+    minimum of `1`, and clamp a caller-supplied `totalCount` to a minimum of `0`. A `null` query throws
+    `ArgumentNullException`.
+
+- **Supplying `totalCount`.** Pass it when you already know how many rows the query matches; the count
+    query is then skipped and the value is reported as `TotalItems` verbatim. The page itself is still
+    read from the query, so a supplied count of `0` does not suppress the data. When `totalCount` is
+    *not* supplied and the computed count is `0`, both methods skip the data query entirely.
+
+- **Ordering.** `orderBy` is declared as `Expression<Func<T, object?>>` for convenience, which makes the
+    compiler wrap a value-type key in a `Convert(..., Object)` node. Both `Paginate` and `PaginateAsync`
+    strip that node before calling `Queryable.OrderBy`, so a relational provider sees a properly typed
+    key and can translate the ordering to SQL.
 
 ## Class diagram
 
@@ -210,6 +233,20 @@ classDiagram
     PaginatedOutput_T --|> DataOutput_T
     PaginatedOutputExtensions ..> PaginatedOutput_T: uses
 ```
+
+## Testing
+
+The test suite is xUnit, and every test is named with the Given / When / Then pattern. Tests carry a
+`Category` trait so the two kinds can be run — and reported — separately:
+
+```bash
+dotnet test src/ArturRios.Output.sln --filter "Category=Unit"
+dotnet test src/ArturRios.Output.sln --filter "Category=Functional"
+```
+
+Unit tests exercise the types in isolation; functional tests paginate through a real EF Core provider
+(SQLite in memory), so the asynchronous path really goes through `IAsyncQueryProvider` and the ordering
+expression really has to be translated to SQL. CI runs the two as separate jobs.
 
 ## Versioning
 

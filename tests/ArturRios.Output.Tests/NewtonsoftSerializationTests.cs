@@ -8,6 +8,7 @@ namespace ArturRios.Output.Tests;
 /// Verifies the output types survive Newtonsoft.Json, on its own and when it has to
 /// read payloads written by System.Text.Json (and the other way around).
 /// </summary>
+[Trait("Category", "Unit")]
 public class NewtonsoftSerializationTests
 {
     private static readonly JsonSerializerSettings CamelCase = new()

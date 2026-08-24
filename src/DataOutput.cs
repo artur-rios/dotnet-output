@@ -52,7 +52,7 @@ public class DataOutput<T> : ProcessOutput
     /// Fluent helper to add multiple errors on the current instance.
     /// </summary>
     /// <param name="errors">Errors to add.</param>
-    public new DataOutput<T> WithErrors(IEnumerable<string> errors)
+    public new DataOutput<T> WithErrors(IEnumerable<string>? errors)
     {
         AddErrors(errors);
 
@@ -74,7 +74,7 @@ public class DataOutput<T> : ProcessOutput
     /// Fluent helper to add multiple informational messages on the current instance.
     /// </summary>
     /// <param name="messages">Messages to add.</param>
-    public new DataOutput<T> WithMessages(IEnumerable<string> messages)
+    public new DataOutput<T> WithMessages(IEnumerable<string>? messages)
     {
         AddMessages(messages);
 

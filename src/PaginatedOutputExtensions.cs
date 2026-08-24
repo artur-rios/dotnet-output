@@ -16,12 +16,16 @@ public static class PaginatedOutputExtensions
     /// </summary>
     /// <typeparam name="T">Element type of the queryable.</typeparam>
     /// <param name="query">The source query.</param>
-    /// <param name="pageNumber">1-based page number.</param>
-    /// <param name="pageSize">Number of items per page.</param>
+    /// <param name="pageNumber">1-based page number. Values below <c>1</c> are clamped to <c>1</c>.</param>
+    /// <param name="pageSize">Number of items per page. Values below <c>1</c> are clamped to <c>1</c>.</param>
     /// <param name="orderBy">Optional ordering expression.</param>
-    /// <param name="totalCount">Optional total count of items in query.</param>
+    /// <param name="totalCount">
+    /// Optional total count of items in the query. When supplied the count query is skipped and this value is
+    /// reported as <see cref="PaginatedOutput{T}.TotalItems"/>. Negative values are clamped to <c>0</c>.
+    /// </param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A task that resolves to a populated <see cref="PaginatedOutput{T}"/>.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="query"/> is <c>null</c>.</exception>
     public static async Task<PaginatedOutput<T>> PaginateAsync<T>(
         this IQueryable<T> query,
         int pageNumber,
@@ -30,30 +34,37 @@ public static class PaginatedOutputExtensions
         int? totalCount = null,
         CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(query);
+
         pageNumber = Math.Max(1, pageNumber);
         pageSize = Math.Max(1, pageSize);
 
-        if (orderBy != null)
+        if (orderBy is not null)
         {
-            query = query.OrderBy(orderBy);
+            query = OrderByExpression(query, orderBy);
         }
 
-        totalCount ??= query.Provider is IAsyncQueryProvider
-            ? await query.CountAsync(cancellationToken).ConfigureAwait(false)
-            : query.Count();
+        var countWasSupplied = totalCount.HasValue;
 
-        var skip = (pageNumber - 1) * pageSize;
-        var pageQuery = query.Skip(skip).Take(pageSize);
+        totalCount = countWasSupplied
+            ? Math.Max(0, totalCount!.Value)
+            : query.Provider is IAsyncQueryProvider
+                ? await query.CountAsync(cancellationToken).ConfigureAwait(false)
+                : query.Count();
 
         List<T> items;
 
-        if (pageQuery.Provider is IAsyncQueryProvider)
+        if (!countWasSupplied && totalCount.Value == 0)
         {
-            items = await pageQuery.ToListAsync(cancellationToken).ConfigureAwait(false);
+            items = [];
         }
         else
         {
-            items = pageQuery.ToList();
+            var pageQuery = query.Skip((pageNumber - 1) * pageSize).Take(pageSize);
+
+            items = pageQuery.Provider is IAsyncQueryProvider
+                ? await pageQuery.ToListAsync(cancellationToken).ConfigureAwait(false)
+                : pageQuery.ToList();
         }
 
         return PaginatedOutput<T>.New
@@ -66,11 +77,15 @@ public static class PaginatedOutputExtensions
     /// </summary>
     /// <typeparam name="T">Element type of the queryable.</typeparam>
     /// <param name="query">The source query.</param>
-    /// <param name="pageNumber">1-based page number.</param>
-    /// <param name="pageSize">Number of items per page.</param>
+    /// <param name="pageNumber">1-based page number. Values below <c>1</c> are clamped to <c>1</c>.</param>
+    /// <param name="pageSize">Number of items per page. Values below <c>1</c> are clamped to <c>1</c>.</param>
     /// <param name="orderBy">Optional ordering expression.</param>
-    /// <param name="totalCount">Optional total count of items in query.</param>
+    /// <param name="totalCount">
+    /// Optional total count of items in the query. When supplied the count query is skipped and this value is
+    /// reported as <see cref="PaginatedOutput{T}.TotalItems"/>. Negative values are clamped to <c>0</c>.
+    /// </param>
     /// <returns>A populated <see cref="PaginatedOutput{T}"/>.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="query"/> is <c>null</c>.</exception>
     public static PaginatedOutput<T> Paginate<T>(
         this IQueryable<T> query,
         int pageNumber,
@@ -78,6 +93,8 @@ public static class PaginatedOutputExtensions
         Expression<Func<T, object?>>? orderBy = null,
         int? totalCount = null)
     {
+        ArgumentNullException.ThrowIfNull(query);
+
         pageNumber = Math.Max(1, pageNumber);
         pageSize = Math.Max(1, pageSize);
 
@@ -86,9 +103,11 @@ public static class PaginatedOutputExtensions
             query = OrderByExpression(query, orderBy);
         }
 
-        totalCount ??= query.Count();
+        var countWasSupplied = totalCount.HasValue;
 
-        var items = totalCount == 0
+        totalCount = countWasSupplied ? Math.Max(0, totalCount!.Value) : query.Count();
+
+        var items = !countWasSupplied && totalCount.Value == 0
             ? []
             : query
                 .Skip((pageNumber - 1) * pageSize)

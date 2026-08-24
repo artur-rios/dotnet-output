@@ -62,10 +62,18 @@ public class ProcessOutput
 
     /// <summary>
     /// Adds multiple error messages to the output, ignoring empty or whitespace entries.
+    /// A <c>null</c> collection is ignored.
     /// </summary>
     /// <param name="errors">The collection of errors to add.</param>
-    public void AddErrors(IEnumerable<string> errors) =>
-        Errors.AddRange(errors.Where(e => !string.IsNullOrWhiteSpace(e)).ToList());
+    public void AddErrors(IEnumerable<string>? errors)
+    {
+        if (errors is null)
+        {
+            return;
+        }
+
+        Errors.AddRange(errors.Where(e => !string.IsNullOrWhiteSpace(e)));
+    }
 
 
     /// <summary>
@@ -84,10 +92,18 @@ public class ProcessOutput
 
     /// <summary>
     /// Adds multiple informational messages to the output, ignoring empty or whitespace entries.
+    /// A <c>null</c> collection is ignored.
     /// </summary>
     /// <param name="messages">The collection of messages to add.</param>
-    public void AddMessages(IEnumerable<string> messages) =>
-        Messages.AddRange(messages.Where(e => !string.IsNullOrWhiteSpace(e)).ToList());
+    public void AddMessages(IEnumerable<string>? messages)
+    {
+        if (messages is null)
+        {
+            return;
+        }
+
+        Messages.AddRange(messages.Where(e => !string.IsNullOrWhiteSpace(e)));
+    }
 
     /// <summary>
     /// Fluent helper to add a single error and return the same instance.
@@ -106,7 +122,7 @@ public class ProcessOutput
     /// </summary>
     /// <param name="errors">The errors to add.</param>
     /// <returns>The same <see cref="ProcessOutput"/> instance for chaining.</returns>
-    public ProcessOutput WithErrors(IEnumerable<string> errors)
+    public ProcessOutput WithErrors(IEnumerable<string>? errors)
     {
         AddErrors(errors);
 
@@ -130,7 +146,7 @@ public class ProcessOutput
     /// </summary>
     /// <param name="messages">The messages to add.</param>
     /// <returns>The same <see cref="ProcessOutput"/> instance for chaining.</returns>
-    public ProcessOutput WithMessages(IEnumerable<string> messages)
+    public ProcessOutput WithMessages(IEnumerable<string>? messages)
     {
         AddMessages(messages);
 
