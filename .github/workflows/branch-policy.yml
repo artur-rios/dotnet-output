@@ -1,0 +1,91 @@
+name: Branch Policy
+
+# Enforces the branching model on every pull request:
+#
+#   develop <- feature/*, fix/* (and the other work prefixes below)
+#   develop <- release/*, main  (back-merges after a release)
+#   main    <- release/<version> only
+#
+# "Branch policy" is a required status check on main and develop, so a pull
+# request from any other branch cannot be merged. The repository owner can
+# bypass it.
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+    branches:
+      - main
+      - develop
+
+permissions:
+  contents: read
+
+jobs:
+  branch-policy:
+    name: Branch policy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate source branch
+        env:
+          BASE: ${{ github.base_ref }}
+          HEAD: ${{ github.head_ref }}
+          WORK_PREFIXES: 'feature feat fix bugfix chore refactor docs ci test perf build'
+        run: |
+          set -euo pipefail
+          read -ra PREFIXES <<< "$WORK_PREFIXES"
+          echo "Pull request: $HEAD -> $BASE"
+          case "$BASE" in
+            main)
+              if [[ "$HEAD" != release/* ]]; then
+                echo "::error::Only release/* branches can be merged into main (got '$HEAD'). Open this pull request against develop instead."
+                exit 1
+              fi
+              ;;
+            develop)
+              if [[ "$HEAD" == release/* || "$HEAD" == main ]]; then
+                echo "Back-merge from '$HEAD' accepted."
+                exit 0
+              fi
+              for prefix in "${PREFIXES[@]}"; do
+                if [[ "$HEAD" == "$prefix/"* ]]; then
+                  echo "Work branch '$HEAD' accepted."
+                  exit 0
+                fi
+              done
+              echo "::error::'$HEAD' is not a recognized branch name. Use one of: $(printf '%s/* ' "${PREFIXES[@]}")(or release/*, main for back-merges)."
+              exit 1
+              ;;
+          esac
+
+      - name: Checkout repository
+        if: github.base_ref == 'main'
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Validate release version
+        if: github.base_ref == 'main'
+        env:
+          HEAD: ${{ github.head_ref }}
+          CSPROJ: src/ArturRios.Output.csproj
+        run: |
+          set -euo pipefail
+          # release/1.2.3 or release/v1.2.3 -> 1.2.3
+          RELEASE_VERSION="${HEAD#release/}"
+          RELEASE_VERSION="${RELEASE_VERSION#v}"
+          if ! [[ "$RELEASE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::Release branches must be named release/<version>, e.g. release/1.2.3 (got '$HEAD')."
+            exit 1
+          fi
+          CS_PROJ_VERSION=$(grep -oP '<Version>\K[^<]+' "$CSPROJ" | head -1)
+          echo "Release branch version: $RELEASE_VERSION"
+          echo "csproj version:         ${CS_PROJ_VERSION:-<none>}"
+          if [ "$RELEASE_VERSION" != "$CS_PROJ_VERSION" ]; then
+            echo "::error::$CSPROJ has <Version>${CS_PROJ_VERSION:-<none>}</Version>, but the branch releases $RELEASE_VERSION. Bump the version on the release branch."
+            exit 1
+          fi
+          if [ -n "$(git tag --list "$RELEASE_VERSION" "v$RELEASE_VERSION")" ]; then
+            echo "::error::Version $RELEASE_VERSION is already tagged. Bump the version for this release."
+            exit 1
+          fi
+          echo "Release $RELEASE_VERSION is ready: after merging, tag main with $RELEASE_VERSION to publish." >> "$GITHUB_STEP_SUMMARY"
