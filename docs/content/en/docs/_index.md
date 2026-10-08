@@ -11,7 +11,7 @@ includes IQueryable pagination extension methods (synchronous & asynchronous).
 
 ## Contents
 
-- Project overview
+- Overview
 - Installation
 - Classes
   - `ProcessOutput`
@@ -20,9 +20,9 @@ includes IQueryable pagination extension methods (synchronous & asynchronous).
   - `CustomException`
   - `PaginatedOutputExtensions` (extension methods)
 - Usage examples
-- Testing
-- Mermaid class diagram
-- Notes
+- API notes & gotchas
+- Class diagram
+- Legal Details
 
 ---
 
@@ -35,9 +35,8 @@ cases:
 - Return typed data payloads with fluent helpers
 - Return paginated list results and help paginate `IQueryable` sources (works with EF Core or in-memory LINQ)
 
-The library has no external runtime dependencies apart from `Microsoft.EntityFrameworkCore` when you call the EF-aware
-`PaginateAsync` extension (the extension is written to work with both IQueryables that support async and ones that
-don't).
+The package's only dependency is `Microsoft.EntityFrameworkCore`, which `PaginateAsync` uses to run the query
+asynchronously when the query provider supports it; for providers that don't, it falls back to synchronous execution.
 
 ## Installation
 
@@ -66,9 +65,9 @@ dotnet sln add external/dotnet-output/src/ArturRios.Output.csproj
   - Purpose: Base container for operation results. Captures messages, errors, timestamp and a convenience `Success`
         flag.
   - Key members:
-    - `List<string> Messages { get; }`
-    - `List<string> Errors { get; }`
-    - `DateTime Timestamp { get; }` (UTC)
+    - `List<string> Messages { get; set; }`
+    - `List<string> Errors { get; set; }`
+    - `DateTime Timestamp { get; set; }` (UTC)
     - `bool Success { get; }` (true when no errors)
     - Fluent helpers: `WithError`, `WithErrors`, `WithMessage`, `WithMessages`
     - Add helpers: `AddError`, `AddErrors`, `AddMessage`, `AddMessages` — every one of them ignores
@@ -83,7 +82,7 @@ dotnet sln add external/dotnet-output/src/ArturRios.Output.csproj
     - `T? Data { get; set; }`
     - Add helper: `AddData(T)`
     - Fluent API: `WithData(T)`, `WithError(string)`, `WithErrors(IEnumerable<string>?)`,
-            `WithMessage(string)`, `WithMessages(IEnumerable<string>)`
+            `WithMessage(string)`, `WithMessages(IEnumerable<string>?)`
     - Static factory: `DataOutput<T>.New`
 
 - `PaginatedOutput<T>` : `DataOutput<List<T>>`
@@ -183,7 +182,8 @@ var items = page.Data; // List<MyEntity>
 
 - **Argument normalisation.** `Paginate` and `PaginateAsync` clamp `pageNumber` and `pageSize` to a
     minimum of `1`, and clamp a caller-supplied `totalCount` to a minimum of `0`. A `null` query throws
-    `ArgumentNullException`.
+    `ArgumentNullException`. A page that starts beyond `int.MaxValue` items in — `(pageNumber - 1) * pageSize`
+    too large for an `int` — comes back empty without reading the query.
 
 - **Supplying `totalCount`.** Pass it when you already know how many rows the query matches; the count
     query is then skipped and the value is reported as `TotalItems` verbatim. The page itself is still
@@ -233,33 +233,6 @@ classDiagram
     PaginatedOutput_T --|> DataOutput_T
     PaginatedOutputExtensions ..> PaginatedOutput_T: uses
 ```
-
-## Testing
-
-The test suite is xUnit, and every test is named with the Given / When / Then pattern. Tests carry a
-`Category` trait so the two kinds can be run — and reported — separately:
-
-```bash
-dotnet test src/ArturRios.Output.sln --filter "Category=Unit"
-dotnet test src/ArturRios.Output.sln --filter "Category=Functional"
-```
-
-Unit tests exercise the types in isolation; functional tests paginate through a real EF Core provider
-(SQLite in memory), so the asynchronous path really goes through `IAsyncQueryProvider` and the ordering
-expression really has to be translated to SQL. CI runs the two as separate jobs.
-
-## Versioning
-
-Semantic Versioning (SemVer). Breaking changes result in a new major version. New methods or non-breaking behavior
-changes increment the minor version; fixes or tweaks increment the patch.
-
-## Build, test and publish
-
-Use the official [.NET CLI](https://learn.microsoft.com/en-us/dotnet/core/tools/) to build, test and publish the project and Git for source control.
-If you want, optional helper toolsets I built to facilitate these tasks are available:
-
-- [Dotnet Tools](https://github.com/artur-rios/dotnet-tools)
-- [Python Dotnet Tools](https://github.com/artur-rios/python-dotnet-tools)
 
 ## Legal Details
 

@@ -1,7 +1,7 @@
 # Dotnet Output
 
 [![Docs](https://img.shields.io/badge/docs-website-blue)](https://artur-rios.github.io/dotnet-output)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/artur-rios/dotnet-output/blob/main/LICENSE)
 [![NuGet](https://img.shields.io/nuget/v/ArturRios.Output.svg)](https://www.nuget.org/packages/ArturRios.Output)
 
 A .NET helper library that standardizes process and data outputs, provides a paginated output container, and
@@ -9,7 +9,7 @@ includes IQueryable pagination extension methods (synchronous & asynchronous).
 
 ## Contents
 
-- Project overview
+- Overview
 - Installation
 - Classes
   - `ProcessOutput`
@@ -18,9 +18,11 @@ includes IQueryable pagination extension methods (synchronous & asynchronous).
   - `CustomException`
   - `PaginatedOutputExtensions` (extension methods)
 - Usage examples
-- Testing
-- Mermaid class diagram
-- Notes
+- API notes & gotchas
+- Class diagram
+- Changelog
+- Contributing
+- Legal Details
 
 ---
 
@@ -33,9 +35,8 @@ cases:
 - Return typed data payloads with fluent helpers
 - Return paginated list results and help paginate `IQueryable` sources (works with EF Core or in-memory LINQ)
 
-The library has no external runtime dependencies apart from `Microsoft.EntityFrameworkCore` when you call the EF-aware
-`PaginateAsync` extension (the extension is written to work with both IQueryables that support async and ones that
-don't).
+The package's only dependency is `Microsoft.EntityFrameworkCore`, which `PaginateAsync` uses to run the query
+asynchronously when the query provider supports it; for providers that don't, it falls back to synchronous execution.
 
 ## Installation
 
@@ -63,9 +64,9 @@ dotnet sln add external/dotnet-output/src/ArturRios.Output.csproj
   - Purpose: Base container for operation results. Captures messages, errors, timestamp and a convenience `Success`
       flag.
   - Key members:
-    - `List<string> Messages { get; }`
-    - `List<string> Errors { get; }`
-    - `DateTime Timestamp { get; }` (UTC)
+    - `List<string> Messages { get; set; }`
+    - `List<string> Errors { get; set; }`
+    - `DateTime Timestamp { get; set; }` (UTC)
     - `bool Success { get; }` (true when no errors)
     - Fluent helpers: `WithError`, `WithErrors`, `WithMessage`, `WithMessages`
     - Add helpers: `AddError`, `AddErrors`, `AddMessage`, `AddMessages` — every one of them ignores
@@ -79,7 +80,7 @@ dotnet sln add external/dotnet-output/src/ArturRios.Output.csproj
     - `T? Data { get; set; }`
     - Add helper: `AddData(T)`
     - Fluent API: `WithData(T)`, `WithError(string)`, `WithErrors(IEnumerable<string>?)`,
-          `WithMessage(string)`, `WithMessages(IEnumerable<string>)`
+          `WithMessage(string)`, `WithMessages(IEnumerable<string>?)`
     - Static factory: `DataOutput<T>.New`
 
 - `PaginatedOutput<T>` : `DataOutput<List<T>>`
@@ -177,7 +178,8 @@ var items = page.Data; // List<MyEntity>
 
 - **Argument normalisation.** `Paginate` and `PaginateAsync` clamp `pageNumber` and `pageSize` to a
     minimum of `1`, and clamp a caller-supplied `totalCount` to a minimum of `0`. A `null` query throws
-    `ArgumentNullException`.
+    `ArgumentNullException`. A page that starts beyond `int.MaxValue` items in — `(pageNumber - 1) * pageSize`
+    too large for an `int` — comes back empty without reading the query.
 
 - **Supplying `totalCount`.** Pass it when you already know how many rows the query matches; the count
     query is then skipped and the value is reported as `TotalItems` verbatim. The page itself is still
@@ -228,54 +230,16 @@ classDiagram
     PaginatedOutputExtensions ..> PaginatedOutput_T: uses
 ```
 
-## Testing
+## Changelog
 
-The test suite is xUnit, and every test is named with the Given / When / Then pattern. Tests carry a
-`Category` trait so the two kinds can be run — and reported — separately:
+Notable changes in each release are recorded in [CHANGELOG.md](https://github.com/artur-rios/dotnet-output/blob/main/CHANGELOG.md). Releases follow
+[Semantic Versioning](https://semver.org/).
 
-```bash
-dotnet test src/ArturRios.Output.sln --filter "Category=Unit"
-dotnet test src/ArturRios.Output.sln --filter "Category=Functional"
-```
+## Contributing
 
-Unit tests exercise the types in isolation; functional tests paginate through a real EF Core provider
-(SQLite in memory), so the asynchronous path really goes through `IAsyncQueryProvider` and the ordering
-expression really has to be translated to SQL. CI runs the two as separate jobs.
-
-## Branching and releases
-
-`develop` is the integration branch and the base for all new work; `main` only holds released code.
-
-1. Branch off `develop` — `feature/<name>` for features, `fix/<name>` for fixes (`chore/`, `refactor/`, `docs/`,
-   `ci/`, `test/`, `perf/` and `build/` are accepted too) — and open a pull request back into `develop`.
-2. To release, cut `release/<version>` from `develop`, set `<Version>` in `src/ArturRios.Output.csproj` to that version
-   and open a pull request into `main`. Only `release/*` branches can be merged into `main`.
-3. Once it is merged, tag the merge commit on `main` with the version. Pushing the tag publishes the package to
-   nuget.org and GitHub Packages:
-
-   ```bash
-   git switch main && git pull
-   git tag <version> && git push origin <version>
-   ```
-
-4. Open a pull request from `main` into `develop` to bring the release back into the integration branch.
-
-Pull requests into `develop` and `main` must pass the tests and the branch policy check. Only the repository owner can
-push version tags, and the publish workflow rejects tags that do not point at a commit on `main`.
-
-## Versioning
-
-Semantic Versioning (SemVer). Breaking changes result in a new major version. New methods or non-breaking behavior
-changes increment the minor version; fixes or tweaks increment the patch.
-
-## Build, test and publish
-
-Use the official [.NET CLI](https://learn.microsoft.com/en-us/dotnet/core/tools/) to build, test and publish the project and Git for source control.
-If you want, optional helper toolsets I built to facilitate these tasks are available:
-
-- [Dotnet Tools](https://github.com/artur-rios/dotnet-tools)
-- [Python Dotnet Tools](https://github.com/artur-rios/python-dotnet-tools)
+Building from source, running the tests, the branching model and the release process are described in
+[CONTRIBUTING.md](https://github.com/artur-rios/dotnet-output/blob/main/CONTRIBUTING.md).
 
 ## Legal Details
 
-This project is licensed under the [MIT License](https://en.wikipedia.org/wiki/MIT_License). A copy of the license is available at [LICENSE](./LICENSE) in the repository.
+This project is licensed under the [MIT License](https://en.wikipedia.org/wiki/MIT_License). A copy of the license is available at [LICENSE](https://github.com/artur-rios/dotnet-output/blob/main/LICENSE) in the repository.
