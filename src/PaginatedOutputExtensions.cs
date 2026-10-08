@@ -54,13 +54,13 @@ public static class PaginatedOutputExtensions
 
         List<T> items;
 
-        if (!countWasSupplied && totalCount.Value == 0)
+        if ((!countWasSupplied && totalCount.Value == 0) || !TryGetOffset(pageNumber, pageSize, out var offset))
         {
             items = [];
         }
         else
         {
-            var pageQuery = query.Skip((pageNumber - 1) * pageSize).Take(pageSize);
+            var pageQuery = query.Skip(offset).Take(pageSize);
 
             items = pageQuery.Provider is IAsyncQueryProvider
                 ? await pageQuery.ToListAsync(cancellationToken).ConfigureAwait(false)
@@ -107,16 +107,35 @@ public static class PaginatedOutputExtensions
 
         totalCount = countWasSupplied ? Math.Max(0, totalCount!.Value) : query.Count();
 
-        var items = !countWasSupplied && totalCount.Value == 0
+        var items = (!countWasSupplied && totalCount.Value == 0) || !TryGetOffset(pageNumber, pageSize, out var offset)
             ? []
             : query
-                .Skip((pageNumber - 1) * pageSize)
+                .Skip(offset)
                 .Take(pageSize)
                 .ToList();
 
         return PaginatedOutput<T>.New
             .WithData(items)
             .WithPagination(pageNumber, pageSize, totalCount.Value);
+    }
+
+    /// <summary>
+    /// Computes how many items precede the page, failing when that number does not fit in an
+    /// <see cref="int"/>.
+    /// </summary>
+    /// <remarks>
+    /// Computed in 64 bits because <c>(pageNumber - 1) * pageSize</c> overflows for a far-out page — both are
+    /// caller input — and the wrapped value can be negative, which LINQ and SQLite both treat as no offset at
+    /// all, handing back the first page under the far-out page number. An offset past
+    /// <see cref="int.MaxValue"/> is past every item <c>Skip</c> can address, so that page is empty.
+    /// </remarks>
+    private static bool TryGetOffset(int pageNumber, int pageSize, out int offset)
+    {
+        var wideOffset = (long)(pageNumber - 1) * pageSize;
+
+        offset = wideOffset <= int.MaxValue ? (int)wideOffset : 0;
+
+        return wideOffset <= int.MaxValue;
     }
 
     /// <summary>

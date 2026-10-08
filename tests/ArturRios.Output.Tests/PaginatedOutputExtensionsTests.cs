@@ -39,6 +39,52 @@ public class PaginatedOutputExtensionsTests
         Assert.Equal(1, result.Data.First().Id);
     }
 
+    [Theory]
+    [InlineData(int.MaxValue, 2)]
+    [InlineData(3, int.MaxValue)]
+    [InlineData(1_073_741_825, 4)]
+    public void GivenAPageWhoseOffsetOverflowsAnInt_WhenPaginating_ThenTheValidPageIsEmpty(int pageNumber, int pageSize)
+    {
+        // (pageNumber - 1) * pageSize used to wrap around to a negative offset, which LINQ treats as 0,
+        // so a far-out page came back holding the first page's items under the far-out page number.
+        var data = Enumerable.Range(1, 23).Select(i => new Item { Id = i }).ToList();
+
+        var result = data.AsQueryable().Paginate(pageNumber, pageSize, x => x.Id);
+
+        Assert.NotNull(result.Data);
+        Assert.Empty(result.Data);
+        Assert.Equal(pageNumber, result.PageNumber);
+        Assert.Equal(23, result.TotalItems);
+    }
+
+    [Theory]
+    [InlineData(int.MaxValue, 2)]
+    [InlineData(3, int.MaxValue)]
+    public async Task GivenAPageWhoseOffsetOverflowsAnInt_WhenPaginatingAsync_ThenTheValidPageIsEmpty(int pageNumber, int pageSize)
+    {
+        var data = Enumerable.Range(1, 23).Select(i => new Item { Id = i }).ToList();
+
+        var result = await data.AsQueryable().PaginateAsync(pageNumber, pageSize, x => x.Id);
+
+        Assert.NotNull(result.Data);
+        Assert.Empty(result.Data);
+        Assert.Equal(pageNumber, result.PageNumber);
+        Assert.Equal(23, result.TotalItems);
+    }
+
+    [Fact]
+    public void GivenTheLastPageWhoseOffsetIsExactlyIntMaxValue_WhenPaginating_ThenItIsStillRead()
+    {
+        // An offset of int.MaxValue itself still fits, so it is still handed to Skip.
+        var data = Enumerable.Range(1, 3).Select(i => new Item { Id = i }).ToList();
+
+        var result = data.AsQueryable().Paginate(2, int.MaxValue);
+
+        Assert.NotNull(result.Data);
+        Assert.Empty(result.Data);
+        Assert.Equal(3, result.TotalItems);
+    }
+
     [Fact]
     public void GivenZeroPageNumberAndPageSize_WhenPaginating_ThenNormalizesToAtLeastOne()
     {
