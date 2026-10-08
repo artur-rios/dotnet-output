@@ -1,7 +1,17 @@
 ﻿name: Publish Package
 
+# Publishes the single NuGet package in this repository.
+#
+# Trigger: push a version tag on main. Tags are the bare version, e.g. 1.2.3
+# (a leading 'v', used by older releases, is still accepted). The tag version
+# must match the project's <Version>, and the tagged commit must be on main:
+# tag the merge commit of the release/* pull request.
+#
+# Manual runs: use "Run workflow" and pick the version tag under
+# "Use workflow from" - a run from a branch has no version to publish.
+
 permissions:
-  contents: write
+  contents: read
   packages: write
 
 on:
@@ -45,7 +55,11 @@ jobs:
 
       - name: Validate tag matches csproj version
         run: |
-          TAG_NAME="${GITHUB_REF##*/}"
+          if [ "$GITHUB_REF_TYPE" != "tag" ]; then
+            echo "::error::Publishing runs from a version tag; this run is on the $GITHUB_REF_TYPE '$GITHUB_REF_NAME'. Pick the tag under \"Use workflow from\"."
+            exit 1
+          fi
+          TAG_NAME="$GITHUB_REF_NAME"
           # Strip optional leading 'v' from tag, e.g., v1.2.3 -> 1.2.3
           TAG_VERSION="${TAG_NAME#v}"
           CS_PROJ_VERSION=$(grep -oP '<Version>\K[^<]+' src/ArturRios.Output.csproj)

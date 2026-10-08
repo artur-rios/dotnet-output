@@ -1,0 +1,35 @@
+version: 2
+
+# Dependency update pull requests, as in the API repositories. Every pull request targets develop:
+# main only receives release/* pull requests (CONTRIBUTING.md), and the branch policy check accepts
+# dependabot/* branches into develop. A package reference bump is a change consumers see in the
+# package's dependency list, so record it under ## [Unreleased] in CHANGELOG.md before merging.
+
+updates:
+  - package-ecosystem: nuget
+    directory: "/"
+    target-branch: develop
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      # Packages that are released together and must move together.
+      microsoft:
+        patterns:
+          - "Microsoft.*"
+          - "System.*"
+      arturrios:
+        patterns:
+          - "ArturRios.*"
+      test-tooling:
+        patterns:
+          - "xunit*"
+          - "coverlet.*"
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    target-branch: develop
+    schedule:
+      interval: monthly
+    # Workflows pin actions by major tag (actions/checkout@v7, ...), which floats within the major
+    # version but never across one. Nothing else moves these.
