@@ -36,6 +36,18 @@ locale = 'en-us'
   [[module.mounts]]
     source = 'static'
     target = 'static'
+  # Mounting into assets/ (below) replaces Hugo's default assets mount; keep the project's own.
+  [[module.mounts]]
+    source = 'assets'
+    target = 'assets'
+  # CHANGELOG.md and CONTRIBUTING.md live at the repository root; the site renders them
+  # (see layouts/_shortcodes/repo-file.html) instead of keeping copies.
+  [[module.mounts]]
+    source = '../CHANGELOG.md'
+    target = 'assets/repo/CHANGELOG.md'
+  [[module.mounts]]
+    source = '../CONTRIBUTING.md'
+    target = 'assets/repo/CONTRIBUTING.md'
 
 [languages]
   [languages.en]
