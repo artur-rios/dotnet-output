@@ -39,8 +39,24 @@ jobs:
       - name: Restore
         run: dotnet restore src/ArturRios.Output.sln
 
+      - name: Check formatting
+        run: dotnet format src/ArturRios.Output.sln --verify-no-changes --no-restore
+
       - name: Build
         run: dotnet build src/ArturRios.Output.sln --configuration Release --no-restore
+
+      # CI runs one job per Category trait, so a test without one would run in
+      # none of them. List the tests outside every category and fail on any.
+      - name: Check every test has a category
+        run: |
+          set -euo pipefail
+          uncategorized=$(dotnet test src/ArturRios.Output.sln --configuration Release --no-build --list-tests \
+            --filter "Category!=Unit&Category!=Functional" | sed -n 's/^    //p')
+          if [ -n "$uncategorized" ]; then
+            echo "::error::These tests have no Category trait (Unit or Functional), so no CI job runs them:"
+            echo "$uncategorized"
+            exit 1
+          fi
 
       - name: Run unit tests
         run: >-
