@@ -1,0 +1,3 @@
+# Docsy appends "All Rights Reserved" to the footer by default, which
+# contradicts the project license. An empty value hides it.
+footer_all_rights_reserved = ""

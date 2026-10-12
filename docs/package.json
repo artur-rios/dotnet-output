@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Documentation site for Dotnet Output",
   "private": true,
-  "license": "MIT",
+  "license": "SEE LICENSE IN ../LICENSE",
   "scripts": {
     "build": "hugo --minify --cleanDestinationDir --gc",
     "serve": "hugo server"

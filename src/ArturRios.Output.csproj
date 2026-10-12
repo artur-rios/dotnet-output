@@ -13,7 +13,7 @@
     <IncludeSymbols>false</IncludeSymbols>
     <Nullable>enable</Nullable>
     <PackageId>ArturRios.Output</PackageId>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageProjectUrl>https://artur-rios.github.io/dotnet-output</PackageProjectUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageTags>utilities</PackageTags>
@@ -25,5 +25,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\README.md" Pack="true" PackagePath="" />
+    <None Include="..\LICENSE" Pack="true" PackagePath="" />
   </ItemGroup>
 </Project>

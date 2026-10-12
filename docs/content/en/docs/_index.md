@@ -236,4 +236,4 @@ classDiagram
 
 ## Legal Details
 
-This project is licensed under the [MIT License](https://en.wikipedia.org/wiki/MIT_License). A copy of the license is available at [LICENSE](https://github.com/artur-rios/dotnet-output/blob/main/LICENSE) in the repository.
+This project is licensed under the [Artur Rios Attribution License](https://github.com/artur-rios/dotnet-output/blob/main/LICENSE). It is free and open source: you may view, use, fork, modify, and extend it, provided you credit the author, Artur Rios, with a link to [artur-rios.tech](https://artur-rios.tech) or [github.com/artur-rios](https://github.com/artur-rios).
