@@ -102,6 +102,20 @@ public sealed class EfCorePaginationTests : IDisposable
     }
 
     [Fact]
+    public async Task GivenAPageWhoseOffsetOverflowsAnInt_WhenPaginatingAsync_ThenAnEmptyPageComesBack()
+    {
+        // The offset used to wrap to a negative OFFSET, which SQLite reads as no offset at all, so the
+        // database answered a request for a far-out page with the first page.
+        var result = await _context.People.PaginateAsync(int.MaxValue, 10, x => x.Id);
+
+        Assert.True(result.Success);
+        Assert.NotNull(result.Data);
+        Assert.Empty(result.Data);
+        Assert.Equal(int.MaxValue, result.PageNumber);
+        Assert.Equal(23, result.TotalItems);
+    }
+
+    [Fact]
     public async Task GivenACancelledToken_WhenPaginatingAsync_ThenTheOperationIsCancelled()
     {
         using var cancellation = new CancellationTokenSource();

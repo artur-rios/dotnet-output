@@ -1,15 +1,16 @@
 # Dotnet Output
 
 [![Docs](https://img.shields.io/badge/docs-website-blue)](https://artur-rios.github.io/dotnet-output)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
+[![License: Attribution](https://img.shields.io/badge/License-Attribution-blue.svg)](https://github.com/artur-rios/dotnet-output/blob/main/LICENSE)
 [![NuGet](https://img.shields.io/nuget/v/ArturRios.Output.svg)](https://www.nuget.org/packages/ArturRios.Output)
 
 A .NET helper library that standardizes process and data outputs, provides a paginated output container, and
-includes IQueryable pagination extension methods (synchronous & asynchronous).
+includes IQueryable pagination extension methods (synchronous & asynchronous) — by page number, or by signed
+continuation token.
 
 ## Contents
 
-- Project overview
+- Overview
 - Installation
 - Classes
   - `ProcessOutput`
@@ -17,10 +18,13 @@ includes IQueryable pagination extension methods (synchronous & asynchronous).
   - `PaginatedOutput`
   - `CustomException`
   - `PaginatedOutputExtensions` (extension methods)
+  - `PageTokenOptions`, `PageTokenErrors`, `SortDirection` (token pagination)
 - Usage examples
-- Testing
-- Mermaid class diagram
-- Notes
+- API notes & gotchas
+- Class diagram
+- Changelog
+- Contributing
+- Legal Details
 
 ---
 
@@ -32,10 +36,11 @@ cases:
 - Return success/failure information together with messages and errors
 - Return typed data payloads with fluent helpers
 - Return paginated list results and help paginate `IQueryable` sources (works with EF Core or in-memory LINQ)
+- Paginate by signed continuation token (keyset pagination): fast on deep pages, stable while rows are added or
+  removed, and a caller can only reach a page with the token issued by the page before it
 
-The library has no external runtime dependencies apart from `Microsoft.EntityFrameworkCore` when you call the EF-aware
-`PaginateAsync` extension (the extension is written to work with both IQueryables that support async and ones that
-don't).
+The package's only dependency is `Microsoft.EntityFrameworkCore`, which `PaginateAsync` uses to run the query
+asynchronously when the query provider supports it; for providers that don't, it falls back to synchronous execution.
 
 ## Installation
 
@@ -63,9 +68,9 @@ dotnet sln add external/dotnet-output/src/ArturRios.Output.csproj
   - Purpose: Base container for operation results. Captures messages, errors, timestamp and a convenience `Success`
       flag.
   - Key members:
-    - `List<string> Messages { get; }`
-    - `List<string> Errors { get; }`
-    - `DateTime Timestamp { get; }` (UTC)
+    - `List<string> Messages { get; set; }`
+    - `List<string> Errors { get; set; }`
+    - `DateTime Timestamp { get; set; }` (UTC)
     - `bool Success { get; }` (true when no errors)
     - Fluent helpers: `WithError`, `WithErrors`, `WithMessage`, `WithMessages`
     - Add helpers: `AddError`, `AddErrors`, `AddMessage`, `AddMessages` — every one of them ignores
@@ -79,7 +84,7 @@ dotnet sln add external/dotnet-output/src/ArturRios.Output.csproj
     - `T? Data { get; set; }`
     - Add helper: `AddData(T)`
     - Fluent API: `WithData(T)`, `WithError(string)`, `WithErrors(IEnumerable<string>?)`,
-          `WithMessage(string)`, `WithMessages(IEnumerable<string>)`
+          `WithMessage(string)`, `WithMessages(IEnumerable<string>?)`
     - Static factory: `DataOutput<T>.New`
 
 - `PaginatedOutput<T>` : `DataOutput<List<T>>`
@@ -89,9 +94,13 @@ dotnet sln add external/dotnet-output/src/ArturRios.Output.csproj
     - `int PageSize { get; set; }` (the requested page size, set via `WithPagination`)
     - `int TotalItems { get; set; }`
     - `int TotalPages { get; }` (computed as Ceil(TotalItems / PageSize), or 0 when PageSize is 0)
+    - `string? NextPageToken { get; set; }` (token for the next page from token pagination; `null` on the last page
+      and on offset-paginated outputs)
+    - `bool HasNextPage { get; }` (true when `NextPageToken` is set)
     - Helpers to build: `WithPagination(int pageNumber, int pageSize, int totalItems)`, `WithData(List<T>)`, `WithData(T)`,
           `WithEmptyData()`, `AddItem(T)`, `AddItems(IEnumerable<T>)`
     - Fluent `WithMessage` / `WithError` overloads preserved.
+    - Fluent `WithNextPageToken(string?)`
     - Static factory: `PaginatedOutput<T>.New`
 
 - `CustomException` (abstract)
@@ -109,6 +118,29 @@ dotnet sln add external/dotnet-output/src/ArturRios.Output.csproj
         synchronous `ToList()`.
     - `PaginatedOutput<T> Paginate<T>(this IQueryable<T> query, int pageNumber, int pageSize, Expression<Func<T, object?>>? orderBy = null, int? totalCount = null)`
       - Synchronous variant. When provided, `orderBy` is applied.
+    - `PaginatedOutput<T> PaginateByToken<T, TKey>(this IQueryable<T> query, string? pageToken, int pageSize, Expression<Func<T, TKey>> keySelector, PageTokenOptions options, SortDirection direction = SortDirection.Ascending, bool includeTotalCount = false)`
+      - Returns the page after the one that issued `pageToken` (the first page when it is `null` or blank), ordered
+        by `keySelector`, with the next page's token in `NextPageToken`. The key must be unique and non-null.
+    - `PaginatedOutput<T> PaginateByToken<T, TKey, TTieBreaker>(this IQueryable<T> query, string? pageToken, int pageSize, Expression<Func<T, TKey>> keySelector, Expression<Func<T, TTieBreaker>> tieBreakerSelector, PageTokenOptions options, SortDirection direction = SortDirection.Ascending, bool includeTotalCount = false)`
+      - For a key that repeats: `tieBreakerSelector` (typically the primary key) orders rows with equal keys.
+    - `PaginateByTokenAsync` — asynchronous variants of both, with a trailing `CancellationToken`; they use EF Core
+      async when the provider supports it, like `PaginateAsync`.
+
+- `PageTokenOptions` (record)
+  - Purpose: Settings for issuing and checking page tokens. Build one instance (typically a singleton from
+      configuration) and pass it to every call that walks the same listing.
+  - Key members:
+    - `required byte[] SigningKey { get; init; }` (HMAC-SHA256 key, at least 32 bytes)
+    - `TimeSpan? Lifetime { get; init; }` (how long a token stays valid; `null` = never expires)
+    - `string? Scope { get; init; }` (binds tokens to one listing, e.g. `"orders:customer=42"`)
+    - `TimeProvider TimeProvider { get; init; }` (clock for issuing and expiry; defaults to `TimeProvider.System`)
+
+- `PageTokenErrors` (static)
+  - Purpose: The errors token pagination reports when it rejects a token, as constants to map to a response.
+  - `Invalid` (malformed, unknown version, or the signature does not match — an edited or forged token),
+      `Expired` (older than `Lifetime`), `Mismatch` (issued for another scope, key, tiebreaker, direction or page size)
+
+- `SortDirection` (enum): `Ascending`, `Descending`
 
 ## Usage examples
 
@@ -144,6 +176,33 @@ var page = query.Paginate(pageNumber, pageSize, e => e.CreatedAt);
 var items = page.Data; // List<MyEntity>
 ```
 
+### Token-paginated example (async, EF Core)
+
+```csharp
+using ArturRios.Output;
+
+// Once, e.g. as a singleton: the key comes from configuration and is shared by every instance of the API.
+var tokenOptions = new PageTokenOptions
+{
+    SigningKey = Convert.FromBase64String(configuration["Pagination:SigningKey"]!),
+    Lifetime = TimeSpan.FromHours(1)
+};
+
+// Per request: pageToken is null for the first page, then the NextPageToken the client got back.
+var page = await dbContext.Orders
+    .Where(o => o.CustomerId == customerId)
+    .PaginateByTokenAsync(pageToken, 50, o => o.CreatedAt, o => o.Id,
+        tokenOptions with { Scope = $"orders:customer={customerId}" },
+        SortDirection.Descending, cancellationToken: ct);
+
+if (!page.Success)
+{
+    return BadRequest(page.Errors); // one of PageTokenErrors
+}
+
+return Ok(page); // page.Data plus page.NextPageToken for the client's next request
+```
+
 ### Paginated example (async, EF Core)
 
 ```csharp
@@ -177,7 +236,8 @@ var items = page.Data; // List<MyEntity>
 
 - **Argument normalisation.** `Paginate` and `PaginateAsync` clamp `pageNumber` and `pageSize` to a
     minimum of `1`, and clamp a caller-supplied `totalCount` to a minimum of `0`. A `null` query throws
-    `ArgumentNullException`.
+    `ArgumentNullException`. A page that starts beyond `int.MaxValue` items in — `(pageNumber - 1) * pageSize`
+    too large for an `int` — comes back empty without reading the query.
 
 - **Supplying `totalCount`.** Pass it when you already know how many rows the query matches; the count
     query is then skipped and the value is reported as `TotalItems` verbatim. The page itself is still
@@ -188,6 +248,28 @@ var items = page.Data; // List<MyEntity>
     compiler wrap a value-type key in a `Convert(..., Object)` node. Both `Paginate` and `PaginateAsync`
     strip that node before calling `Queryable.OrderBy`, so a relational provider sees a properly typed
     key and can translate the ordering to SQL.
+
+- **Token pagination.** `PaginateByToken` / `PaginateByTokenAsync` resume after the last item of the previous
+    page with a keyset filter (`WHERE key > @lastKey`, or `<` descending) instead of an offset, fetching one row
+    past the page to tell whether another follows. The cursor travels as a SQL parameter, so every page shares
+    one query plan. Notes:
+  - **No skipping pages.** Tokens are HMAC-SHA256 signed: editing the page number or key in one fails the
+      signature check, so the only way to reach page N is the token issued by page N-1. `PageNumber` is carried
+      in the token, so it stays trustworthy. A caller can still walk every page in order — rate limiting is the
+      API's job.
+  - **Signed, not encrypted.** Anyone can base64-decode a token and read the key values in it.
+  - **Bound to the listing.** A token is only accepted with the same key and tiebreaker selectors, direction,
+      page size and `PageTokenOptions.Scope` it was issued with; set `Scope` per filter (customer, tenant, search)
+      so a token from one listing cannot be replayed against another.
+  - **Rejected tokens** — invalid, expired or mismatched — return an empty output carrying one of the
+      `PageTokenErrors`; they never throw and never fall back to the first page. Programmer errors do throw: a
+      `null` query, selector or options (`ArgumentNullException`), a signing key under 32 bytes
+      (`ArgumentException`), and a `null` key or tiebreaker on a page boundary (`InvalidOperationException`).
+  - **Keys** must be non-null, and the key — or the key and tiebreaker together — must be unique, or rows that
+      share a key across a page boundary are skipped. Any ordering already on the query is replaced.
+  - **Counting** is off by default: `TotalItems` and `TotalPages` are `0` unless `includeTotalCount: true`,
+      which counts the whole query on every call.
+  - **Forward only.** There is no previous-page token.
 
 ## Class diagram
 
@@ -212,6 +294,8 @@ classDiagram
         +PageSize: int
         +TotalItems: int
         +TotalPages: int
+        +NextPageToken: string_optional
+        +HasNextPage: bool
     }
 
     class CustomException {
@@ -221,61 +305,33 @@ classDiagram
     class PaginatedOutputExtensions {
         +PaginateAsync()
         +Paginate()
+        +PaginateByTokenAsync()
+        +PaginateByToken()
     }
 
     DataOutput_T --|> ProcessOutput
     PaginatedOutput_T --|> DataOutput_T
+    class PageTokenOptions {
+        +SigningKey: byte_array
+        +Lifetime: TimeSpan_optional
+        +Scope: string_optional
+        +TimeProvider: TimeProvider
+    }
+
     PaginatedOutputExtensions ..> PaginatedOutput_T: uses
+    PaginatedOutputExtensions ..> PageTokenOptions: uses
 ```
 
-## Testing
+## Changelog
 
-The test suite is xUnit, and every test is named with the Given / When / Then pattern. Tests carry a
-`Category` trait so the two kinds can be run — and reported — separately:
+Notable changes in each release are recorded in [CHANGELOG.md](https://github.com/artur-rios/dotnet-output/blob/main/CHANGELOG.md). Releases follow
+[Semantic Versioning](https://semver.org/).
 
-```bash
-dotnet test src/ArturRios.Output.sln --filter "Category=Unit"
-dotnet test src/ArturRios.Output.sln --filter "Category=Functional"
-```
+## Contributing
 
-Unit tests exercise the types in isolation; functional tests paginate through a real EF Core provider
-(SQLite in memory), so the asynchronous path really goes through `IAsyncQueryProvider` and the ordering
-expression really has to be translated to SQL. CI runs the two as separate jobs.
-
-## Branching and releases
-
-`develop` is the integration branch and the base for all new work; `main` only holds released code.
-
-1. Branch off `develop` — `feature/<name>` for features, `fix/<name>` for fixes (`chore/`, `refactor/`, `docs/`,
-   `ci/`, `test/`, `perf/` and `build/` are accepted too) — and open a pull request back into `develop`.
-2. To release, cut `release/<version>` from `develop`, set `<Version>` in `src/ArturRios.Output.csproj` to that version
-   and open a pull request into `main`. Only `release/*` branches can be merged into `main`.
-3. Once it is merged, tag the merge commit on `main` with the version. Pushing the tag publishes the package to
-   nuget.org and GitHub Packages:
-
-   ```bash
-   git switch main && git pull
-   git tag <version> && git push origin <version>
-   ```
-
-4. Open a pull request from `main` into `develop` to bring the release back into the integration branch.
-
-Pull requests into `develop` and `main` must pass the tests and the branch policy check. Only the repository owner can
-push version tags, and the publish workflow rejects tags that do not point at a commit on `main`.
-
-## Versioning
-
-Semantic Versioning (SemVer). Breaking changes result in a new major version. New methods or non-breaking behavior
-changes increment the minor version; fixes or tweaks increment the patch.
-
-## Build, test and publish
-
-Use the official [.NET CLI](https://learn.microsoft.com/en-us/dotnet/core/tools/) to build, test and publish the project and Git for source control.
-If you want, optional helper toolsets I built to facilitate these tasks are available:
-
-- [Dotnet Tools](https://github.com/artur-rios/dotnet-tools)
-- [Python Dotnet Tools](https://github.com/artur-rios/python-dotnet-tools)
+Building from source, running the tests, the branching model and the release process are described in
+[CONTRIBUTING.md](https://github.com/artur-rios/dotnet-output/blob/main/CONTRIBUTING.md).
 
 ## Legal Details
 
-This project is licensed under the [MIT License](https://en.wikipedia.org/wiki/MIT_License). A copy of the license is available at [LICENSE](./LICENSE) in the repository.
+This project is licensed under the [Artur Rios Attribution License](https://github.com/artur-rios/dotnet-output/blob/main/LICENSE). It is free and open source: you may view, use, fork, modify, and extend it, provided you credit the author, Artur Rios, with a link to [artur-rios.tech](https://artur-rios.tech) or [github.com/artur-rios](https://github.com/artur-rios).

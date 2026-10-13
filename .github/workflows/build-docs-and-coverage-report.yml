@@ -6,6 +6,8 @@ on:
       - main
     paths:
       - 'docs/**'
+      - 'CHANGELOG.md'
+      - 'CONTRIBUTING.md'
       - 'src/**'
       - 'tests/**'
       - '.github/workflows/build-docs-and-coverage-report.yml'

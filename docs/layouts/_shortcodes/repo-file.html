@@ -1,0 +1,15 @@
+{{- /*
+  Renders a Markdown file from the repository root (CHANGELOG.md, CONTRIBUTING.md)
+  so the site shows it without keeping a copy. hugo.toml mounts each file under
+  assets/repo/. The file's own H1 is dropped (the page has a title) and relative
+  links are pointed at the file on GitHub.
+*/ -}}
+{{- $name := .Get 0 -}}
+{{- with resources.Get (path.Join "repo" $name) -}}
+  {{- $text := replaceRE `^\x{FEFF}?# [^\n]*\n+` "" .Content -}}
+  {{- $base := printf "%s/blob/%s/" site.Params.github_repo site.Params.github_branch -}}
+  {{- $text = replaceRE `\]\(\./([^)]+)\)` (printf "](%s$1)" $base) $text -}}
+  {{- $.Page.RenderString (dict "display" "block") $text -}}
+{{- else -}}
+  {{- errorf "repo-file: %q is not mounted under assets/repo (see hugo.toml)" $name -}}
+{{- end -}}
