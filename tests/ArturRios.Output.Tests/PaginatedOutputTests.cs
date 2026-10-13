@@ -181,4 +181,56 @@ public class PaginatedOutputTests
         Assert.Contains("One", output.Errors);
         Assert.Contains("Two", output.Errors);
     }
+
+    [Fact]
+    public void GivenANewOutput_WhenReadingTheNextPageToken_ThenThereIsNoNextPage()
+    {
+        var output = PaginatedOutput<int>.New.WithData([1, 2, 3]);
+
+        Assert.Null(output.NextPageToken);
+        Assert.False(output.HasNextPage);
+    }
+
+    [Fact]
+    public void GivenAToken_WhenSettingTheNextPageToken_ThenThereIsANextPage()
+    {
+        var output = PaginatedOutput<int>.New.WithData([1, 2, 3]).WithNextPageToken("abc.def");
+
+        Assert.Equal("abc.def", output.NextPageToken);
+        Assert.True(output.HasNextPage);
+    }
+
+    [Fact]
+    public void GivenATokenWasSet_WhenClearingTheNextPageToken_ThenThereIsNoNextPage()
+    {
+        var output = PaginatedOutput<int>.New.WithNextPageToken("abc.def").WithNextPageToken(null);
+
+        Assert.Null(output.NextPageToken);
+        Assert.False(output.HasNextPage);
+    }
+
+    [Fact]
+    public void GivenANextPageToken_WhenRoundTrippingWithSystemTextJson_ThenTheTokenIsRestored()
+    {
+        var output = PaginatedOutput<int>.New.WithData([1, 2]).WithPagination(2, 2, 0).WithNextPageToken("abc.def");
+
+        var json = JsonSerializer.Serialize(output);
+        var deserialized = JsonSerializer.Deserialize<PaginatedOutput<int>>(json);
+
+        Assert.Contains("\"HasNextPage\":true", json);
+        Assert.NotNull(deserialized);
+        Assert.Equal("abc.def", deserialized.NextPageToken);
+        Assert.True(deserialized.HasNextPage);
+    }
+
+    [Fact]
+    public void GivenAPayloadClaimingANextPageWithoutAToken_WhenDeserializing_ThenHasNextPageFollowsTheToken()
+    {
+        const string json = """{"Data":[1],"NextPageToken":null,"HasNextPage":true}""";
+
+        var deserialized = JsonSerializer.Deserialize<PaginatedOutput<int>>(json);
+
+        Assert.NotNull(deserialized);
+        Assert.False(deserialized.HasNextPage);
+    }
 }

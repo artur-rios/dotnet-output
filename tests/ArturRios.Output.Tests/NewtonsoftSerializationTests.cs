@@ -121,4 +121,30 @@ public class NewtonsoftSerializationTests
         Assert.Equal(23, deserialized.TotalItems);
         Assert.Equal(3, deserialized.TotalPages);
     }
+
+    [Fact]
+    public void GivenANextPageToken_WhenRoundTrippingWithNewtonsoft_ThenTheTokenIsRestored()
+    {
+        var output = PaginatedOutput<int>.New.WithData([1, 2]).WithNextPageToken("abc.def");
+
+        var json = JsonConvert.SerializeObject(output, CamelCase);
+        var deserialized = JsonConvert.DeserializeObject<PaginatedOutput<int>>(json, CamelCase);
+
+        Assert.Contains("\"hasNextPage\":true", json);
+        Assert.NotNull(deserialized);
+        Assert.Equal("abc.def", deserialized.NextPageToken);
+        Assert.True(deserialized.HasNextPage);
+    }
+
+    [Fact]
+    public void GivenANextPageTokenWrittenBySystemTextJson_WhenDeserializingWithNewtonsoft_ThenTheTokenIsRestored()
+    {
+        var output = PaginatedOutput<int>.New.WithData([1, 2]).WithNextPageToken("abc.def");
+
+        var json = SystemTextJson.Serialize(output);
+        var deserialized = JsonConvert.DeserializeObject<PaginatedOutput<int>>(json);
+
+        Assert.NotNull(deserialized);
+        Assert.Equal("abc.def", deserialized.NextPageToken);
+    }
 }

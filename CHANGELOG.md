@@ -7,6 +7,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- Token pagination: `PaginateByToken` and `PaginateByTokenAsync` page an `IQueryable<T>` by signed continuation token
+  instead of page number. Each page resumes after the previous one with a keyset filter (`WHERE key > @lastKey`), so
+  deep pages stay fast, rows added or removed between requests are neither repeated nor skipped, and the count query
+  is skipped unless `includeTotalCount` is set. Overloads take a tiebreaker for keys that repeat, and a
+  `SortDirection`.
+- Tokens are HMAC-SHA256 signed, so a caller can only reach a page with the token issued by the page before it:
+  an edited or forged token is rejected. `PageTokenOptions` carries the signing key, an optional `Lifetime` and an
+  optional `Scope` that binds tokens to one listing. A rejected token returns an empty output carrying one of the
+  `PageTokenErrors` (`Invalid`, `Expired`, `Mismatch`) instead of throwing.
+- `PaginatedOutput<T>.NextPageToken`, `HasNextPage` and `WithNextPageToken`.
+
 ### Fixed
 
 - `Paginate` and `PaginateAsync` return an empty page when `(pageNumber - 1) * pageSize` does not fit in an `int`.

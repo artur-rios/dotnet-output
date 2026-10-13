@@ -30,6 +30,18 @@ public class PaginatedOutput<T> : DataOutput<List<T>>
     public int TotalPages => PageSize == 0 ? 0 : (int)Math.Ceiling((double)TotalItems / PageSize);
 
     /// <summary>
+    /// Opaque token that fetches the page after this one through
+    /// <see cref="PaginatedOutputExtensions.PaginateByToken{T, TKey}"/>, or <c>null</c> when this is the last page
+    /// (and always on outputs built by offset pagination).
+    /// </summary>
+    public string? NextPageToken { get; set; }
+
+    /// <summary>
+    /// Indicates whether a page follows this one, i.e. whether <see cref="NextPageToken"/> is set.
+    /// </summary>
+    public bool HasNextPage => NextPageToken is not null;
+
+    /// <summary>
     /// Creates a new <see cref="PaginatedOutput{T}"/> instance.
     /// </summary>
     public static new PaginatedOutput<T> New => new();
@@ -46,6 +58,18 @@ public class PaginatedOutput<T> : DataOutput<List<T>>
         PageNumber = pageNumber;
         PageSize = pageSize;
         TotalItems = totalItems;
+
+        return this;
+    }
+
+    /// <summary>
+    /// Sets the token that fetches the next page and returns the instance.
+    /// </summary>
+    /// <param name="token">The next page's token, or <c>null</c> when there is no next page.</param>
+    /// <returns>The same <see cref="PaginatedOutput{T}"/> instance for chaining.</returns>
+    public PaginatedOutput<T> WithNextPageToken(string? token)
+    {
+        NextPageToken = token;
 
         return this;
     }
