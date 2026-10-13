@@ -7,6 +7,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [3.3.0] - 2026-10-13
+
 ### Added
 
 - Token pagination: `PaginateByToken` and `PaginateByTokenAsync` page an `IQueryable<T>` by signed continuation token
@@ -96,7 +98,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `CustomException`, a base exception carrying several messages.
 - `Paginate` and `PaginateAsync` extension methods to paginate an `IQueryable<T>` into a `PaginatedOutput<T>`.
 
-[Unreleased]: https://github.com/artur-rios/dotnet-output/compare/3.2.0...HEAD
+[Unreleased]: https://github.com/artur-rios/dotnet-output/compare/3.3.0...HEAD
+[3.3.0]: https://github.com/artur-rios/dotnet-output/compare/3.2.0...3.3.0
 [3.2.0]: https://github.com/artur-rios/dotnet-output/compare/v3.1.0...3.2.0
 [3.1.0]: https://github.com/artur-rios/dotnet-output/compare/v3.0.0...v3.1.0
 [3.0.0]: https://github.com/artur-rios/dotnet-output/compare/v2.0.1...v3.0.0
