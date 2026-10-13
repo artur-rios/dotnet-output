@@ -24,6 +24,9 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.11" />
   </ItemGroup>
   <ItemGroup>
+    <InternalsVisibleTo Include="ArturRios.Output.Tests" />
+  </ItemGroup>
+  <ItemGroup>
     <None Include="..\README.md" Pack="true" PackagePath="" />
     <None Include="..\LICENSE" Pack="true" PackagePath="" />
   </ItemGroup>
