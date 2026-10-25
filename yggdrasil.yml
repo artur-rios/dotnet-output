@@ -1,0 +1,39 @@
+# The pipeline file of dotnet-output and of its docs site. One file, two catalog entries: the library (dotnet-output: checks
+# test and coverage, publish.nuget) and its docs site (dotnet-output-docs: deploy.inputs coverage). Each job runs only
+# its own entry's checks. Reference: yggdrasil's docs/catalog.md, "Repository pipeline file". Check it where the
+# catalog is, in the yggdrasil checkout:
+#   python3 scripts/pipeline_config.py describe dotnet-output <this repository's checkout>
+#   python3 scripts/pipeline_config.py describe dotnet-output-docs <this repository's checkout>
+# The scripts under ci/ run from the repository's root, so you can run them on your machine too.
+
+checks:
+  test:                                  # format, build, test categories, tests (ci/test.sh)
+    image: mcr.microsoft.com/dotnet/sdk:10.0.402@sha256:747cbade5bfd918a175ac32f8f1d931edec2c7d0d5397a3de72eaef1ac1f66d2
+    run: ci/test.sh
+    # docker: true                       # Functional tests that use Testcontainers need the CI engine's socket
+    archive: "artifacts/test-results/**" # the .trx results, kept with the build
+  coverage:                              # the tests with coverage, and the HTML report (ci/coverage.sh)
+    image: mcr.microsoft.com/dotnet/sdk:10.0.402@sha256:747cbade5bfd918a175ac32f8f1d931edec2c7d0d5397a3de72eaef1ac1f66d2
+    run: ci/coverage.sh
+    credentials:
+      # ReportGenerator's PRO license. Not bound on renovate/* builds, nor when missing: the free report is made.
+      REPORTGENERATOR_LICENSE: reportgenerator-license
+    archive: "coverage-report/**"        # the docs site's image is built with it
+
+# What the Branch Policy workflow checked besides the branching model, for a single-package library whose old
+# branch-policy.yml had a "Validate release version" step: a release/x.y.z pull request into main must carry that
+# version in the <Version> of the packed projects (ci/branch-policy.sh, run after yggdrasil's common branch policy).
+# A library whose old workflow had no such step, or that versions each package apart, deletes this section and
+# ci/branch-policy.sh.
+branchPolicy:
+  image: alpine:3.24.3@sha256:be2656061b536c1883c4034790e21d0a09c5aaaf51968b89368a3c0371ea2c9a
+  run: sh ci/branch-policy.sh
+
+deploy:
+  inputs: [coverage]                     # the docs application's deploy runs coverage, and copies its archive in
+
+publish:
+  nuget:                                 # on the owner's version tag: packed here with no credential, pushed later
+    image: mcr.microsoft.com/dotnet/sdk:10.0.402@sha256:747cbade5bfd918a175ac32f8f1d931edec2c7d0d5397a3de72eaef1ac1f66d2
+    run: ci/pack.sh                      # RELEASE_VERSION is the tag; the packages must carry it
+    packages: "artifacts/*.nupkg"
