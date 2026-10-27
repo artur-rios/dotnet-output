@@ -1,0 +1,3 @@
+{
+  "extends": ["local>artur-rios/yggdrasil//renovate/default"]
+}
