@@ -9,7 +9,7 @@
     "serve": "hugo server"
   },
   "devDependencies": {
-    "@docsy/theme": "^0.16.0",
+    "@docsy/theme": "^0.18.0",
     "autoprefixer": "^10.5.4",
     "postcss": "^8.5.26",
     "postcss-cli": "^11.0.1"
