@@ -34,7 +34,9 @@ package_ids() {
   esac | while IFS= read -r project; do
     [ -f "$project" ] || continue
     text=$(tr -d '\r' < "$project")
-    if printf '%s\n' "$text" | grep -qE '<IsPackable>[[:space:]]*false|Microsoft\.NET\.Test\.Sdk'; then
+    # A here-string, not `printf | grep -q`: grep exits at its match, printf's next write then fails with a
+    # broken pipe, and pipefail would read that as no match, counting a test project as packable.
+    if grep -qE '<IsPackable>[[:space:]]*false|Microsoft\.NET\.Test\.Sdk' <<<"$text"; then
       continue
     fi
     id=$(printf '%s\n' "$text" | sed -n 's|.*<PackageId>[[:space:]]*\([^<[:space:]]*\)[[:space:]]*</PackageId>.*|\1|p' | head -n 1)
