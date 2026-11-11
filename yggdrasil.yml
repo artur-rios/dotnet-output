@@ -8,12 +8,12 @@
 
 checks:
   test:                                  # format, build, test categories, tests (ci/test.sh)
-    image: mcr.microsoft.com/dotnet/sdk:10.0.402@sha256:747cbade5bfd918a175ac32f8f1d931edec2c7d0d5397a3de72eaef1ac1f66d2
+    image: mcr.microsoft.com/dotnet/sdk:10.0.404@sha256:fe0fd4e93bd2fbb47c883b7a6369e5c8d3db8bf01cdc5981f6ee35fbdf3ff4fb
     run: ci/test.sh
     # docker: true                       # Functional tests that use Testcontainers need the CI engine's socket
     archive: "artifacts/test-results/**" # the .trx results, kept with the build
   coverage:                              # the tests with coverage, and the HTML report (ci/coverage.sh)
-    image: mcr.microsoft.com/dotnet/sdk:10.0.402@sha256:747cbade5bfd918a175ac32f8f1d931edec2c7d0d5397a3de72eaef1ac1f66d2
+    image: mcr.microsoft.com/dotnet/sdk:10.0.404@sha256:fe0fd4e93bd2fbb47c883b7a6369e5c8d3db8bf01cdc5981f6ee35fbdf3ff4fb
     run: ci/coverage.sh
     credentials:
       # ReportGenerator's PRO license. Not bound on renovate/* builds, nor when missing: the free report is made.
@@ -34,6 +34,6 @@ deploy:
 
 publish:
   nuget:                                 # on the owner's version tag: packed here with no credential, pushed later
-    image: mcr.microsoft.com/dotnet/sdk:10.0.402@sha256:747cbade5bfd918a175ac32f8f1d931edec2c7d0d5397a3de72eaef1ac1f66d2
+    image: mcr.microsoft.com/dotnet/sdk:10.0.404@sha256:fe0fd4e93bd2fbb47c883b7a6369e5c8d3db8bf01cdc5981f6ee35fbdf3ff4fb
     run: ci/pack.sh                      # RELEASE_VERSION is the tag; the packages must carry it
     packages: "artifacts/*.nupkg"
