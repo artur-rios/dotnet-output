@@ -14,7 +14,7 @@ set -euo pipefail
 
 SOLUTION='src/ArturRios.Output.sln'
 # renovate: datasource=nuget depName=dotnet-reportgenerator-globaltool
-REPORTGENERATOR_VERSION=5.5.11
+REPORTGENERATOR_VERSION=5.6.0
 
 case $SOLUTION in
   *'<'*) echo "ci/coverage.sh: set SOLUTION at the top of the script to the library's solution (it still has the placeholder $SOLUTION)" >&2; exit 2 ;;
