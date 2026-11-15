@@ -7,6 +7,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [3.3.2] - 2026-11-14
+
+### Changed
+
+- `Microsoft.EntityFrameworkCore` updated from 10.0.11 to 10.0.15.
+
 ## [3.3.1] - 2026-10-29
 
 ### Changed
@@ -105,7 +111,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `CustomException`, a base exception carrying several messages.
 - `Paginate` and `PaginateAsync` extension methods to paginate an `IQueryable<T>` into a `PaginatedOutput<T>`.
 
-[Unreleased]: https://github.com/artur-rios/dotnet-output/compare/3.3.1...HEAD
+[Unreleased]: https://github.com/artur-rios/dotnet-output/compare/3.3.2...HEAD
+[3.3.2]: https://github.com/artur-rios/dotnet-output/compare/3.3.1...3.3.2
 [3.3.1]: https://github.com/artur-rios/dotnet-output/compare/3.3.0...3.3.1
 [3.3.0]: https://github.com/artur-rios/dotnet-output/compare/3.2.0...3.3.0
 [3.2.0]: https://github.com/artur-rios/dotnet-output/compare/v3.1.0...3.2.0

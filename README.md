@@ -1,16 +1,8 @@
 # Dotnet Output
 
-> [!NOTE]
-> This is the real, open-source code of dotnet-output. Its home is Forgejo, at
-> https://git.techcraftsmen.net/artur-rios/dotnet-output; the copy on GitHub is a read-only mirror, for viewing only, and
-> its issues and pull requests are not followed. If you want to contribute, email me at
-> arturdev@duck.com.
-
 [![Docs](https://img.shields.io/badge/docs-website-blue)](https://docs.artur-rios.tech/dotnet-output)
 [![License: Attribution](https://img.shields.io/badge/License-Attribution-blue.svg)](https://github.com/artur-rios/dotnet-output/blob/main/LICENSE)
 [![NuGet](https://img.shields.io/nuget/v/ArturRios.Output.svg)](https://www.nuget.org/packages/ArturRios.Output)
-
-This repository lives at <https://git.techcraftsmen.net/artur-rios/dotnet-output>. The GitHub repository is a read-only mirror of it.
 
 A .NET helper library that standardizes process and data outputs, provides a paginated output container, and
 includes IQueryable pagination extension methods (synchronous & asynchronous) — by page number, or by signed
@@ -339,6 +331,9 @@ Notable changes in each release are recorded in [CHANGELOG.md](https://github.co
 
 Building from source, running the tests, the branching model and the release process are described in
 [CONTRIBUTING.md](https://github.com/artur-rios/dotnet-output/blob/main/CONTRIBUTING.md).
+
+The GitHub repository is a read-only mirror for the real, open-source code of dotnet-output. Its home is Forgejo, at
+https://git.techcraftsmen.net/artur-rios/dotnet-output. If you want to contribute, e-mail me at arturdev@duck.com.
 
 ## Legal Details
 
