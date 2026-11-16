@@ -7,6 +7,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+
+- `PaginateByToken` and `PaginateByTokenAsync` work with an `object`-typed key or tiebreaker selector, as a sort column
+  picked at run time gives. The first page came back, but the second threw `InvalidCastException` for a reference-type
+  property (`x => x.Name`) and `InvalidOperationException` ("cannot compare keys of type System.Object") for a boxed
+  value type (`x => (object)x.Id`). The token's value is now read, and compared, as the type the selector returns
+  before the cast to `object`.
+
 ## [3.3.2] - 2026-11-14
 
 ### Changed
