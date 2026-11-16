@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
-# The `test` check: format, build, test categories, tests. It ports the library's run-tests.yml (the Unit tests
-# and Functional tests jobs). yggdrasil.yml runs it in the pinned .NET SDK image from the repository's root; it
-# runs the same on your machine with the SDK installed.
+# The `test` check: format, build, test categories. It ports the library's run-tests.yml (the Unit tests and
+# Functional tests jobs), but runs no test itself: the `coverage` check (ci/coverage.sh) runs every test, of every
+# category, once, with coverage collected, and fails when one fails or skips. yggdrasil runs each check in a container
+# of its own, at the same time as the others, and one check cannot read another's result, so running the suite here as
+# well only ran it twice. yggdrasil.yml runs it in the pinned .NET SDK image from the repository's root; it runs the
+# same on your machine with the SDK installed.
 #
-# 1. A test with no Category trait (Unit or Functional) fails the check: CI runs the categories one by one, so a
-#    test without one would run in none of them. Add other categories to the two places that name them.
-# 2. Functional tests that use Testcontainers need `docker: true` on this check in yggdrasil.yml.
+# A test with no Category trait (Unit or Functional) fails the check: the categories are how the suite is run and
+# reported apart (CONTRIBUTING.md), so a test without one would run in none of those runs. Add other categories to
+# the filter below.
 set -euo pipefail
 
 SOLUTION='src/ArturRios.Output.sln'
@@ -27,17 +30,7 @@ dotnet build "$SOLUTION" --configuration Release --no-restore
 uncategorized=$(dotnet test "$SOLUTION" --configuration Release --no-build --list-tests \
   --filter "Category!=Unit&Category!=Functional" | sed -n 's/^    //p')
 if [ -n "$uncategorized" ]; then
-  echo "ci/test.sh: these tests have no Category trait (Unit or Functional), so no CI run would run them:" >&2
+  echo "ci/test.sh: these tests have no Category trait (Unit or Functional), so no category run would include them:" >&2
   echo "$uncategorized" >&2
   exit 1
 fi
-
-# One run per category, with its results (.trx) under artifacts/test-results/<category>, which the check archives.
-for category in Unit Functional; do
-  directory=$(printf '%s' "$category" | tr '[:upper:]' '[:lower:]')
-  dotnet test "$SOLUTION" --configuration Release --no-build \
-    --filter "Category=$category" \
-    --logger "console;verbosity=normal" \
-    --logger "trx;LogFileName=$directory-tests.trx" \
-    --results-directory "artifacts/test-results/$directory"
-done

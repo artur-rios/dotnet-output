@@ -349,9 +349,9 @@ public class TokenPaginationTests
         var query = Items(3).AsQueryable();
         Expression<Func<Item, int>> key = x => x.Id;
 
-        await Assert.ThrowsAsync<ArgumentNullException>(() => ((IQueryable<Item>)null!).PaginateByTokenAsync(null, 10, key, Options));
-        await Assert.ThrowsAsync<ArgumentNullException>(() => query.PaginateByTokenAsync(null, 10, key, null!));
-        await Assert.ThrowsAsync<ArgumentException>(() => query.PaginateByTokenAsync(null, 10, key, Options with { SigningKey = [] }));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => ((IQueryable<Item>)null!).PaginateByTokenAsync(null, 10, key, Options, cancellationToken: TestContext.Current.CancellationToken));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => query.PaginateByTokenAsync(null, 10, key, null!, cancellationToken: TestContext.Current.CancellationToken));
+        await Assert.ThrowsAsync<ArgumentException>(() => query.PaginateByTokenAsync(null, 10, key, Options with { SigningKey = [] }, cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -364,7 +364,7 @@ public class TokenPaginationTests
 
         do
         {
-            var page = await query.PaginateByTokenAsync(token, 10, x => x.Id, Options, includeTotalCount: true);
+            var page = await query.PaginateByTokenAsync(token, 10, x => x.Id, Options, includeTotalCount: true, cancellationToken: TestContext.Current.CancellationToken);
 
             Assert.Equal(23, page.TotalItems);
             seen.AddRange(page.Data!);
@@ -385,7 +385,7 @@ public class TokenPaginationTests
 
         do
         {
-            var page = await query.PaginateByTokenAsync(token, 2, x => x.Value, x => x.Id, Options);
+            var page = await query.PaginateByTokenAsync(token, 2, x => x.Value, x => x.Id, Options, cancellationToken: TestContext.Current.CancellationToken);
 
             seen.AddRange(page.Data!);
             token = page.NextPageToken;
@@ -397,7 +397,7 @@ public class TokenPaginationTests
     [Fact]
     public async Task GivenAnEditedToken_WhenPaginatingByTokenAsync_ThenTheRequestIsRejectedAsInvalid()
     {
-        var page = await Items(3).AsQueryable().PaginateByTokenAsync("not.a-token", 10, x => x.Id, Options);
+        var page = await Items(3).AsQueryable().PaginateByTokenAsync("not.a-token", 10, x => x.Id, Options, cancellationToken: TestContext.Current.CancellationToken);
 
         AssertRejected(page, PageTokenErrors.Invalid);
     }

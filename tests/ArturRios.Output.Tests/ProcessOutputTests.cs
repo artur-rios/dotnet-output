@@ -39,7 +39,6 @@ public class ProcessOutputTests
 
         Assert.Single(output.Errors);
         Assert.False(output.Success);
-        Assert.Equal(DateTime.UtcNow.Date, output.Timestamp.Date);
     }
 
     [Fact]
@@ -53,7 +52,6 @@ public class ProcessOutputTests
 
         Assert.Empty(output.Errors);
         Assert.True(output.Success);
-        Assert.Equal(DateTime.UtcNow.Date, output.Timestamp.Date);
     }
 
     [Fact]
@@ -64,7 +62,6 @@ public class ProcessOutputTests
         output.AddErrors(["e1", string.Empty, "e2"]);
 
         Assert.Equal(2, output.Errors.Count);
-        Assert.Equal(DateTime.UtcNow.Date, output.Timestamp.Date);
     }
 
     [Fact]
@@ -76,7 +73,6 @@ public class ProcessOutputTests
 
         Assert.Empty(output.Errors);
         Assert.True(output.Success);
-        Assert.Equal(DateTime.UtcNow.Date, output.Timestamp.Date);
     }
 
     [Fact]
@@ -92,7 +88,6 @@ public class ProcessOutputTests
         Assert.Single(output.Messages);
         Assert.Equal("m1", output.Messages.First());
         Assert.True(output.Success);
-        Assert.Equal(DateTime.UtcNow.Date, output.Timestamp.Date);
     }
 
     [Fact]
@@ -106,7 +101,6 @@ public class ProcessOutputTests
 
         Assert.Empty(output.Messages);
         Assert.True(output.Success);
-        Assert.Equal(DateTime.UtcNow.Date, output.Timestamp.Date);
     }
 
     [Fact]
@@ -118,7 +112,6 @@ public class ProcessOutputTests
 
         Assert.Equal(2, output.Messages.Count);
         Assert.True(output.Success);
-        Assert.Equal(DateTime.UtcNow.Date, output.Timestamp.Date);
     }
 
     [Fact]
@@ -130,7 +123,6 @@ public class ProcessOutputTests
 
         Assert.Empty(output.Messages);
         Assert.True(output.Success);
-        Assert.Equal(DateTime.UtcNow.Date, output.Timestamp.Date);
     }
 
     [Fact]
@@ -142,9 +134,42 @@ public class ProcessOutputTests
             .WithMessages(["m2"])
             .WithErrors(["e2"]);
 
-        Assert.Equal(2, output.Messages.Count);
-        Assert.Equal(2, output.Errors.Count);
-        Assert.Equal(DateTime.UtcNow.Date, output.Timestamp.Date);
+        // The timestamp is covered by its own test: comparing its date with today's failed across UTC midnight.
+        Assert.Equal(["m", "m2"], output.Messages);
+        Assert.Equal(["e", "e2"], output.Errors);
+        Assert.False(output.Success);
+    }
+
+    [Fact]
+    public void GivenTheFluentHelpers_WhenChained_ThenTheSameInstanceComesBack()
+    {
+        var output = ProcessOutput.New;
+
+        Assert.Same(output, output.WithError("e"));
+        Assert.Same(output, output.WithErrors(["e2"]));
+        Assert.Same(output, output.WithMessage("m"));
+        Assert.Same(output, output.WithMessages(["m2"]));
+    }
+
+    [Fact]
+    public void GivenATimestamp_WhenSettingIt_ThenItIsKept()
+    {
+        var timestamp = new DateTime(2026, 1, 2, 3, 4, 5, DateTimeKind.Utc);
+
+        Assert.Equal(timestamp, new ProcessOutput { Timestamp = timestamp }.Timestamp);
+    }
+
+    [Fact]
+    public void GivenCollectionsAssigned_WhenReadingThem_ThenTheSameListsComeBack()
+    {
+        List<string> errors = ["e"];
+        List<string> messages = ["m"];
+
+        var output = new ProcessOutput { Errors = errors, Messages = messages };
+
+        Assert.Same(errors, output.Errors);
+        Assert.Same(messages, output.Messages);
+        Assert.False(output.Success);
     }
 
     [Fact]

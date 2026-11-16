@@ -26,7 +26,7 @@ dotnet build src/ArturRios.Output.sln
 
 ## Testing
 
-The test suite is xUnit, and every test is named with the Given / When / Then pattern. Tests carry a
+The test suite is xUnit v3, and every test is named with the Given / When / Then pattern. Tests carry a
 `Category` trait so the two kinds can be run — and reported — separately:
 
 ```bash
@@ -36,14 +36,16 @@ dotnet test src/ArturRios.Output.sln --filter "Category=Functional"
 
 Unit tests exercise the types in isolation; functional tests paginate through a real EF Core provider
 (SQLite in memory), so the asynchronous path really goes through `IAsyncQueryProvider` and the ordering
-expression really has to be translated to SQL. The `test` check runs the two one after the other, and both must pass before a pull request can be merged. It is `ci/test.sh`, which you can run on your machine
-as well.
+expression really has to be translated to SQL.
 
-The check also fails when a test has no `Category` trait, since no run would include it, and when
-`dotnet format --verify-no-changes` finds a file to reformat; run `dotnet format src/ArturRios.Output.sln` before pushing.
+CI runs the suite once, in the `coverage` check (`ci/coverage.sh`): every test of both kinds, with coverage collected,
+and the HTML report that the docs site serves at `/coverage-report/`. Every test must pass, and none may skip, before a
+pull request can be merged. You can run it on your machine as well.
 
-The `coverage` check (`ci/coverage.sh`) runs the tests with coverage collected and makes the HTML report that the docs site
-serves at `/coverage-report/`.
+The `test` check (`ci/test.sh`) runs no test: it fails when `dotnet format --verify-no-changes` finds a file to
+reformat (run `dotnet format src/ArturRios.Output.sln` before pushing), when the solution does not build, and when a
+test has no `Category` trait, since none of the runs above would include it. Running the suite there too would only
+run it twice: each check runs in a container of its own, at the same time as the other, and cannot read its result.
 
 ## Branching and pull requests
 

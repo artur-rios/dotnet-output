@@ -3,7 +3,7 @@ using ArturRios.Output.Tests.Mock;
 namespace ArturRios.Output.Tests;
 
 [Trait("Category", "Unit")]
-public class Tests
+public class CustomExceptionTests
 {
     [Fact]
     public void GivenSingleMessage_WhenExceptionIsThrown_ThenReturnMessage()
@@ -28,4 +28,22 @@ public class Tests
     }
 
     private static void TestMethod(string[] messages) => throw new TestException(messages);
+
+    [Fact]
+    public void GivenNoMessages_WhenExceptionIsCreated_ThenTheMessageIsEmpty()
+    {
+        var exception = new TestException([]);
+
+        Assert.Empty(exception.Messages);
+        Assert.Equal(string.Empty, exception.Message);
+    }
+
+    [Fact]
+    public void GivenMessages_WhenExceptionIsCreated_ThenItIsAnException()
+    {
+        Exception exception = new TestException(["Error 1"]);
+
+        Assert.IsAssignableFrom<CustomException>(exception);
+        Assert.Null(exception.InnerException);
+    }
 }

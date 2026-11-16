@@ -118,7 +118,7 @@ public sealed class EfCoreTokenPaginationTests : IDisposable
     [Fact]
     public async Task GivenAGuidKey_WhenWalkingByTokenAsync_ThenRowsComeBackOnceInTheDatabasesGuidOrder()
     {
-        var expected = await _context.Orders.OrderBy(x => x.ExternalId).Select(x => x.Id).ToListAsync();
+        var expected = await _context.Orders.OrderBy(x => x.ExternalId).Select(x => x.Id).ToListAsync(cancellationToken: TestContext.Current.CancellationToken);
 
         var pages = await WalkAllAsync(token => _context.Orders.PaginateByTokenAsync(token, 5, x => x.ExternalId, Options));
 
@@ -162,12 +162,12 @@ public sealed class EfCoreTokenPaginationTests : IDisposable
     public async Task GivenTwoLaterPages_WhenFetchingThem_ThenBothRunTheSameParameterisedSql()
     {
         // Were the cursor inlined as a literal, every page would send different SQL and compile its own plan.
-        var first = await _context.Orders.PaginateByTokenAsync(null, 5, x => x.Id, Options);
-        var second = await _context.Orders.PaginateByTokenAsync(first.NextPageToken, 5, x => x.Id, Options);
+        var first = await _context.Orders.PaginateByTokenAsync(null, 5, x => x.Id, Options, cancellationToken: TestContext.Current.CancellationToken);
+        var second = await _context.Orders.PaginateByTokenAsync(first.NextPageToken, 5, x => x.Id, Options, cancellationToken: TestContext.Current.CancellationToken);
 
         _commands.Clear();
-        await _context.Orders.PaginateByTokenAsync(first.NextPageToken, 5, x => x.Id, Options);
-        await _context.Orders.PaginateByTokenAsync(second.NextPageToken, 5, x => x.Id, Options);
+        await _context.Orders.PaginateByTokenAsync(first.NextPageToken, 5, x => x.Id, Options, cancellationToken: TestContext.Current.CancellationToken);
+        await _context.Orders.PaginateByTokenAsync(second.NextPageToken, 5, x => x.Id, Options, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(2, _commands.Count);
         Assert.Equal(SqlOf(_commands[0]), SqlOf(_commands[1]));
@@ -179,12 +179,12 @@ public sealed class EfCoreTokenPaginationTests : IDisposable
     [Fact]
     public async Task GivenARowInsertedBeforeTheCursor_WhenFetchingTheNextPage_ThenItNeitherRepeatsNorSkips()
     {
-        var first = await _context.Orders.PaginateByTokenAsync(null, 10, x => x.Id, Options);
+        var first = await _context.Orders.PaginateByTokenAsync(null, 10, x => x.Id, Options, cancellationToken: TestContext.Current.CancellationToken);
 
         _context.Orders.Add(new Order { Id = 0, Name = "Order 00", CreatedAt = Start, Day = Start, ExternalId = Guid.Empty });
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var second = await _context.Orders.PaginateByTokenAsync(first.NextPageToken, 10, x => x.Id, Options);
+        var second = await _context.Orders.PaginateByTokenAsync(first.NextPageToken, 10, x => x.Id, Options, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(Enumerable.Range(11, 10), second.Data!.Select(x => x.Id));
     }
@@ -192,11 +192,11 @@ public sealed class EfCoreTokenPaginationTests : IDisposable
     [Fact]
     public async Task GivenAnEditedToken_WhenPaginatingByTokenAsync_ThenItIsRejectedWithoutQueryingTheDatabase()
     {
-        var first = await _context.Orders.PaginateByTokenAsync(null, 10, x => x.Id, Options);
+        var first = await _context.Orders.PaginateByTokenAsync(null, 10, x => x.Id, Options, cancellationToken: TestContext.Current.CancellationToken);
         var token = first.NextPageToken!;
 
         _commands.Clear();
-        var page = await _context.Orders.PaginateByTokenAsync((token[0] == 'A' ? "B" : "A") + token[1..], 10, x => x.Id, Options);
+        var page = await _context.Orders.PaginateByTokenAsync((token[0] == 'A' ? "B" : "A") + token[1..], 10, x => x.Id, Options, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.False(page.Success);
         Assert.Equal([PageTokenErrors.Invalid], page.Errors);
