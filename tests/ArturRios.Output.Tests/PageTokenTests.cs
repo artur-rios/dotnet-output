@@ -266,6 +266,23 @@ public class PageTokenTests
         Assert.Equal(fingerprints.Length, fingerprints.Distinct().Count());
     }
 
+    [Theory]
+    [InlineData("pt-BR")] // a decimal comma
+    [InlineData("fa-IR")] // its own decimal separator and digits
+    [InlineData("en-US")]
+    [InlineData("")]
+    public void GivenAKeySelectorWithAConstant_WhenFingerprintingUnderAnyCulture_ThenTheFingerprintIsTheInvariantOne(
+        string culture)
+    {
+        Expression<Func<Item, double>> key = x => x.Id * 1.5;
+
+        using var scope = new CultureScope(culture);
+
+        // The fingerprint the invariant culture gave before the selector was printed culture-independently, so the
+        // tokens already issued there (and under en-US, which prints numbers the same way) stay valid.
+        Assert.Equal("BubS01JIq1U4ucitJkZ_7g", PageToken.CreateFingerprint(Options(), key, null, SortDirection.Ascending, 10));
+    }
+
     [Fact]
     public void GivenAScope_WhenFingerprinting_ThenTheScopeIsNotReadableFromTheFingerprint()
     {

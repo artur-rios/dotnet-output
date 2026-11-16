@@ -272,6 +272,28 @@ public class TokenPaginationTests
     }
 
     [Fact]
+    public void GivenATokenIssuedUnderAnotherCulture_WhenTheKeySelectorHasAFractionalConstant_ThenTheTokenIsAccepted()
+    {
+        // The fingerprint used to print the selector's constant in the current culture: 1.5 under en-US, 1,5 under
+        // pt-BR, so a token issued by one server was a mismatch on another.
+        var query = Items(10).AsQueryable();
+        string? token;
+
+        using (new CultureScope("en-US"))
+        {
+            token = query.PaginateByToken(null, 4, x => x.Id * 1.5, Options).NextPageToken;
+        }
+
+        Assert.NotNull(token);
+
+        using var culture = new CultureScope("pt-BR");
+        var page = query.PaginateByToken(token, 4, x => x.Id * 1.5, Options);
+
+        Assert.True(page.Success, string.Join(", ", page.Errors));
+        Assert.Equal([5, 6, 7, 8], page.Data!.Select(x => x.Id));
+    }
+
+    [Fact]
     public void GivenRowsInsertedBeforeTheCursor_WhenFetchingTheNextPage_ThenItNeitherRepeatsNorSkips()
     {
         var items = Items(23);
