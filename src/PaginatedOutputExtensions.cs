@@ -131,6 +131,12 @@ public static class PaginatedOutputExtensions
     /// a tiebreaker. Any ordering already on <paramref name="query"/> is replaced. Tokens are signed, so a caller can
     /// only reach a page with the token issued by the page before it, but not encrypted: the key values in a token
     /// are readable.
+    /// <para>
+    /// <typeparamref name="TKey"/> may be <see cref="object"/>, as when the sort column is picked at run time
+    /// (<c>x =&gt; x.Name</c> or <c>x =&gt; (object)x.Id</c>): the token carries, and the keyset filter compares, the
+    /// type the selector's expression has before the cast to <see cref="object"/>, so a boxed value type works too.
+    /// That type still needs a comparison operator or <c>CompareTo</c>.
+    /// </para>
     /// </remarks>
     /// <typeparam name="T">Element type of the queryable.</typeparam>
     /// <typeparam name="TKey">Type of the key the listing is ordered and resumed by.</typeparam>
@@ -367,12 +373,13 @@ public static class PaginatedOutputExtensions
                 return false;
             }
 
-            TTieBreaker? lastTieBreaker = default;
+            object? lastTieBreaker = null;
 
             // A signed payload whose values no longer read as the key types — a property whose type changed between
             // deployments, say — cannot resume the listing.
-            if (!TryReadValue<TKey>(payload!.Key, out var lastKey) ||
-                (tieBreakerSelector is not null && !TryReadValue(payload.TieBreaker, out lastTieBreaker)))
+            if (!TryReadValue(payload!.Key, ComparedKey(keySelector).Type, out var lastKey) ||
+                (tieBreakerSelector is not null &&
+                 !TryReadValue(payload.TieBreaker, ComparedKey(tieBreakerSelector).Type, out lastTieBreaker)))
             {
                 plan = null;
                 rejection = PaginatedOutput<T>.New.WithEmptyData().WithError(PageTokenErrors.Invalid);
@@ -464,9 +471,14 @@ public static class PaginatedOutputExtensions
             .WithNextPageToken(nextPageToken);
     }
 
-    private static bool TryReadValue<TValue>(JsonElement? element, [NotNullWhen(true)] out TValue? value)
+    /// <summary>
+    /// Reads a token value as <paramref name="type"/>, the type the keyset filter compares: the selector's own type,
+    /// or for an <see cref="object"/>-typed selector the type of the value it returns (see <see cref="ComparedKey"/>).
+    /// Read as <see cref="object"/>, a value would come back as a <see cref="JsonElement"/>, which no key is.
+    /// </summary>
+    private static bool TryReadValue(JsonElement? element, Type type, [NotNullWhen(true)] out object? value)
     {
-        value = default;
+        value = null;
 
         if (element is null)
         {
@@ -475,7 +487,7 @@ public static class PaginatedOutputExtensions
 
         try
         {
-            value = element.Value.Deserialize<TValue>();
+            value = element.Value.Deserialize(type);
         }
         catch (JsonException)
         {
@@ -491,13 +503,13 @@ public static class PaginatedOutputExtensions
     /// </summary>
     private static Expression<Func<T, bool>> After<T, TKey, TTieBreaker>(
         Expression<Func<T, TKey>> keySelector,
-        TKey lastKey,
+        object lastKey,
         Expression<Func<T, TTieBreaker>>? tieBreakerSelector,
-        TTieBreaker? lastTieBreaker,
+        object? lastTieBreaker,
         bool descending)
     {
         var parameter = keySelector.Parameters[0];
-        var key = keySelector.Body;
+        var key = ComparedKey(keySelector);
         var capturedKey = Captured(lastKey, key.Type);
 
         var body = Beyond(key, capturedKey, descending);
@@ -505,7 +517,7 @@ public static class PaginatedOutputExtensions
         if (tieBreakerSelector is not null)
         {
             var tieBreaker = new ParameterReplacer(tieBreakerSelector.Parameters[0], parameter)
-                .Visit(tieBreakerSelector.Body);
+                .Visit(ComparedKey(tieBreakerSelector));
 
             body = Expression.OrElse(body, Expression.AndAlso(
                 Expression.Equal(key, capturedKey),
@@ -514,6 +526,18 @@ public static class PaginatedOutputExtensions
 
         return Expression.Lambda<Func<T, bool>>(body, parameter);
     }
+
+    /// <summary>
+    /// The expression the keyset filter compares: the selector's body, without the cast to <see cref="object"/> that
+    /// an <see cref="object"/>-typed selector over a value type has (<c>x =&gt; (object)x.Id</c>). <c>object</c> has no
+    /// comparison, so the filter compares the value's own type instead, which EF Core translates as it does for a
+    /// typed selector.
+    /// </summary>
+    private static Expression ComparedKey(LambdaExpression selector) =>
+        selector.Body is UnaryExpression { NodeType: ExpressionType.Convert or ExpressionType.ConvertChecked } convert &&
+        convert.Type == typeof(object)
+            ? convert.Operand
+            : selector.Body;
 
     /// <summary>
     /// <c>left &gt; right</c> (or <c>&lt;</c> when descending), through the type's comparison operator when it has
@@ -561,12 +585,14 @@ public static class PaginatedOutputExtensions
     /// Wraps a value the way the compiler wraps a captured variable — a field read off a constant — so EF Core sends
     /// it as a SQL parameter rather than inlining a literal, and every page shares one cached query plan.
     /// </summary>
-    private static Expression Captured<TValue>(TValue value, Type type)
+    /// <remarks>
+    /// <paramref name="value"/> was read from the token as <paramref name="type"/>, so the field has that type.
+    /// </remarks>
+    private static Expression Captured(object? value, Type type)
     {
-        Expression field = Expression.Field(Expression.Constant(new CapturedValue<TValue>(value)),
-            nameof(CapturedValue<TValue>.Value));
+        var holder = Activator.CreateInstance(typeof(CapturedValue<>).MakeGenericType(type), value)!;
 
-        return field.Type == type ? field : Expression.Convert(field, type);
+        return Expression.Field(Expression.Constant(holder), nameof(CapturedValue<object>.Value));
     }
 
     private sealed class CapturedValue<TValue>(TValue value)

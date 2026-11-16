@@ -108,6 +108,24 @@ public sealed class EfCoreTokenPaginationTests : IDisposable
     }
 
     [Fact]
+    public async Task GivenAnObjectTypedStringKey_WhenWalkingByTokenAsync_ThenTheProviderTranslatesTheComparison()
+    {
+        var pages = await WalkAllAsync(token =>
+            _context.Orders.PaginateByTokenAsync<Order, object>(token, 4, x => x.Name, Options));
+
+        Assert.Equal(Enumerable.Range(1, 23), pages.SelectMany(x => x.Data!).Select(x => x.Id));
+    }
+
+    [Fact]
+    public async Task GivenAnObjectTypedValueTypeKey_WhenWalkingByTokenAsync_ThenTheProviderTranslatesTheComparison()
+    {
+        var pages = await WalkAllAsync(token =>
+            _context.Orders.PaginateByTokenAsync<Order, object>(token, 4, x => x.Id, Options, SortDirection.Descending));
+
+        Assert.Equal(Enumerable.Range(1, 23).Reverse(), pages.SelectMany(x => x.Data!).Select(x => x.Id));
+    }
+
+    [Fact]
     public async Task GivenADateTimeKey_WhenWalkingByTokenAsync_ThenTheProviderTranslatesTheComparison()
     {
         var pages = await WalkAllAsync(token => _context.Orders.PaginateByTokenAsync(token, 5, x => x.CreatedAt, Options));

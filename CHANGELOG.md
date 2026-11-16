@@ -7,6 +7,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+
+- `PaginateByToken` and `PaginateByTokenAsync` work with an `object`-typed key or tiebreaker selector, as a sort column
+  picked at run time gives. The first page came back, but the second threw `InvalidCastException` for a reference-type
+  property (`x => x.Name`) and `InvalidOperationException` ("cannot compare keys of type System.Object") for a boxed
+  value type (`x => (object)x.Id`). The token's value is now read, and compared, as the type the selector returns
+  before the cast to `object`.
+- A page token is no longer rejected as `PageTokenErrors.Mismatch` when it is read under another culture than the one
+  that issued it. The token's fingerprint included the key selector's text, whose constants print in the current
+  culture, so with a selector such as `x => x.Id * 1.5` a token issued under en-US did not match under pt-BR. The
+  selector is now printed with the invariant culture. Tokens issued under the invariant culture stay valid, and so do
+  those issued under any culture for a selector whose text the culture does not change; others, such as pt-BR tokens
+  for a selector with a fractional constant, are rejected once, as a mismatch, and the listing restarts from its first
+  page.
+
 ## [3.3.2] - 2026-11-14
 
 ### Changed
