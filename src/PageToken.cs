@@ -184,8 +184,10 @@ internal static class PageToken
             return false;
         }
 
+        // The token's age against the lifetime, rather than its issue time plus the lifetime against now: the sum
+        // overflows DateTimeOffset for a lifetime as long as TimeSpan.MaxValue, and the age cannot.
         if (options.Lifetime is { } lifetime &&
-            DateTimeOffset.FromUnixTimeSeconds(read.IssuedAt) + lifetime < options.TimeProvider.GetUtcNow())
+            options.TimeProvider.GetUtcNow() - DateTimeOffset.FromUnixTimeSeconds(read.IssuedAt) > lifetime)
         {
             error = PageTokenErrors.Expired;
 

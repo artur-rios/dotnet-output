@@ -21,6 +21,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   those issued under any culture for a selector whose text the culture does not change; others, such as pt-BR tokens
   for a selector with a fractional constant, are rejected once, as a mismatch, and the listing restarts from its first
   page.
+- `PaginateByToken` and `PaginateByTokenAsync` page through an enum key (`x => x.Status`, `x => (object)x.Status`, or
+  a nullable enum). The first page came back, but the second threw `ArgumentException` for an enum, and every page
+  threw `InvalidOperationException` ("cannot compare keys") for a nullable enum: an enum has no comparison operator,
+  and its only `CompareTo` takes an `object`. The key is now compared as its underlying number, the order `OrderBy`
+  sorts it in and, for EF Core, the column an enum is stored in by default.
+- `PaginateByToken` and `PaginateByTokenAsync` with a page size of `int.MaxValue` return every item. They returned an
+  empty page, as a successful one, since the one item they read past the page to know whether there is a next one
+  made the count wrap to a negative number; against PostgreSQL the query failed instead.
+- A `PageTokenOptions.Lifetime` as long as `TimeSpan.MaxValue` no longer makes every token's read throw
+  `ArgumentOutOfRangeException`: a token's age is now compared with the lifetime, instead of its issue time plus the
+  lifetime, which overflowed, with the current time.
 
 ## [3.3.2] - 2026-11-14
 

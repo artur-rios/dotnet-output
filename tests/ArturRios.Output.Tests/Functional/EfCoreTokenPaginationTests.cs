@@ -40,7 +40,8 @@ public sealed class EfCoreTokenPaginationTests : IDisposable
             CreatedAt = Start.AddMinutes(i),
             Day = Start.AddDays((i - 1) / 3),
             ExternalId = new Guid(i, 0, 0, new byte[8]),
-            Open = i % 2 == 1
+            Open = i % 2 == 1,
+            Status = (OrderStatus)(i % 4)
         }));
 
         _context.SaveChanges();
@@ -142,6 +143,39 @@ public sealed class EfCoreTokenPaginationTests : IDisposable
 
         Assert.Equal(expected, pages.SelectMany(x => x.Data!).Select(x => x.Id));
         Assert.Equal(23, expected.Distinct().Count());
+    }
+
+    [Fact]
+    public async Task GivenAnEnumKeyAndATieBreaker_WhenWalkingByTokenAsync_ThenTheProviderTranslatesTheComparison()
+    {
+        var pages = await WalkAllAsync(token =>
+            _context.Orders.PaginateByTokenAsync(token, 4, x => x.Status, x => x.Id, Options));
+
+        var expected = Enumerable.Range(1, 23).OrderBy(i => i % 4).ThenBy(i => i);
+
+        Assert.Equal(expected, pages.SelectMany(x => x.Data!).Select(x => x.Id));
+    }
+
+    [Fact]
+    public async Task GivenAnEnumKeyAndATieBreaker_WhenWalkingByTokenAsyncDescending_ThenTheProviderTranslatesTheComparison()
+    {
+        var pages = await WalkAllAsync(token =>
+            _context.Orders.PaginateByTokenAsync(token, 4, x => x.Status, x => x.Id, Options, SortDirection.Descending));
+
+        var expected = Enumerable.Range(1, 23).OrderByDescending(i => i % 4).ThenByDescending(i => i);
+
+        Assert.Equal(expected, pages.SelectMany(x => x.Data!).Select(x => x.Id));
+    }
+
+    [Fact]
+    public async Task GivenAnObjectTypedEnumKey_WhenWalkingByTokenAsync_ThenTheProviderTranslatesTheComparison()
+    {
+        var pages = await WalkAllAsync(token =>
+            _context.Orders.PaginateByTokenAsync<Order, object, int>(token, 4, x => x.Status, x => x.Id, Options));
+
+        var expected = Enumerable.Range(1, 23).OrderBy(i => i % 4).ThenBy(i => i);
+
+        Assert.Equal(expected, pages.SelectMany(x => x.Data!).Select(x => x.Id));
     }
 
     [Fact]
@@ -248,6 +282,16 @@ public sealed class EfCoreTokenPaginationTests : IDisposable
         public Guid ExternalId { get; init; }
 
         public bool Open { get; init; }
+
+        public OrderStatus Status { get; init; }
+    }
+
+    private enum OrderStatus
+    {
+        Placed,
+        Paid,
+        Shipped,
+        Delivered
     }
 
     private sealed class OrdersContext(DbContextOptions<OrdersContext> options) : DbContext(options)
