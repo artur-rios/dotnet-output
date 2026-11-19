@@ -402,7 +402,11 @@ public static class PaginatedOutputExtensions
         var getTieBreaker = tieBreakerSelector?.Compile();
         var nextPageNumber = pageNumber + 1;
 
-        plan = new KeysetPlan<T>(query, ordered.Take(pageSize + 1), pageNumber, pageSize, IssueNextToken);
+        // One item past the page tells whether there is a next one. int.MaxValue + 1 would wrap to a negative count,
+        // which LINQ takes as zero items and SQL rejects, and no page can be larger anyway.
+        var lookAhead = pageSize == int.MaxValue ? pageSize : pageSize + 1;
+
+        plan = new KeysetPlan<T>(query, ordered.Take(lookAhead), pageNumber, pageSize, IssueNextToken);
         rejection = null;
 
         return true;
@@ -544,9 +548,20 @@ public static class PaginatedOutputExtensions
     /// one and through <c>left.CompareTo(right) &gt; 0</c> otherwise (strings, for example), which EF Core translates
     /// to a plain SQL comparison too.
     /// </summary>
+    /// <remarks>
+    /// An enum has neither: it has no comparison operator, and its only <c>CompareTo</c> takes an <c>object</c>. It is
+    /// compared as its underlying number instead, the order <c>OrderBy</c> sorts it in and the column EF Core stores
+    /// it in by default.
+    /// </remarks>
     private static Expression Beyond(Expression left, Expression right, bool descending)
     {
         var comparison = descending ? ExpressionType.LessThan : ExpressionType.GreaterThan;
+
+        if (AsUnderlyingNumber(left.Type) is { } number)
+        {
+            left = Expression.Convert(left, number);
+            right = Expression.Convert(right, number);
+        }
 
         if (HasComparisonOperator(left.Type))
         {
@@ -558,6 +573,23 @@ public static class PaginatedOutputExtensions
                             $"Token pagination cannot compare keys of type {left.Type}: it has neither a comparison operator nor CompareTo({left.Type}).");
 
         return Expression.MakeBinary(comparison, Expression.Call(left, compareTo, right), Expression.Constant(0));
+    }
+
+    /// <summary>
+    /// The underlying number type of an enum (<c>int?</c> for a nullable one), or <c>null</c> for any other type.
+    /// </summary>
+    private static Type? AsUnderlyingNumber(Type type)
+    {
+        var nullable = Nullable.GetUnderlyingType(type);
+
+        if (!(nullable ?? type).IsEnum)
+        {
+            return null;
+        }
+
+        var underlying = Enum.GetUnderlyingType(nullable ?? type);
+
+        return nullable is null ? underlying : typeof(Nullable<>).MakeGenericType(underlying);
     }
 
     private static bool HasComparisonOperator(Type type) =>

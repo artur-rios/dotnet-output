@@ -215,6 +215,18 @@ public class PageTokenTests
     }
 
     [Fact]
+    public void GivenTheLongestLifetime_WhenReadingTheToken_ThenItIsStillValid()
+    {
+        var clock = new FixedTimeProvider(IssuedAt);
+        var options = Options(TimeSpan.MaxValue, clock);
+        var token = Issue(options);
+
+        clock.Now = IssuedAt.AddYears(100);
+
+        Read(token, options);
+    }
+
+    [Fact]
     public void GivenNoLifetime_WhenReadingAnOldToken_ThenItIsStillValid()
     {
         var clock = new FixedTimeProvider(IssuedAt);
