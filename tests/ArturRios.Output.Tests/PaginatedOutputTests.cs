@@ -233,4 +233,71 @@ public class PaginatedOutputTests
         Assert.NotNull(deserialized);
         Assert.False(deserialized.HasNextPage);
     }
+
+    [Fact]
+    public void GivenNoData_WhenAddingAnItem_ThenTheListIsCreated()
+    {
+        var output = PaginatedOutput<int>.New;
+
+        Assert.Null(output.Data);
+
+        output.AddItem(1);
+
+        Assert.Equal([1], output.Data);
+    }
+
+    [Fact]
+    public void GivenNoData_WhenAddingItems_ThenTheListIsCreated()
+    {
+        var output = PaginatedOutput<int>.New;
+
+        output.AddItems([1, 2]);
+
+        Assert.Equal([1, 2], output.Data);
+    }
+
+    [Fact]
+    public void GivenNoData_WhenAddingASingleItemFluently_ThenTheListIsCreated()
+    {
+        Assert.Equal([7], PaginatedOutput<int>.New.WithData(7).Data);
+    }
+
+    [Fact]
+    public void GivenExistingData_WhenEmptyingIt_ThenTheListIsEmptyAndNotNull()
+    {
+        var output = PaginatedOutput<int>.New.WithData([1, 2]).WithEmptyData();
+
+        Assert.NotNull(output.Data);
+        Assert.Empty(output.Data);
+    }
+
+    [Fact]
+    public void GivenTheFluentHelpers_WhenChained_ThenTheSamePaginatedOutputComesBack()
+    {
+        var output = PaginatedOutput<int>.New;
+
+        Assert.Same(output, output.WithPagination(1, 10, 3));
+        Assert.Same(output, output.WithNextPageToken("token"));
+        Assert.Same(output, output.WithData([1]));
+        Assert.Same(output, output.WithData(2));
+        Assert.Same(output, output.WithEmptyData());
+        Assert.Same(output, output.WithError("error"));
+        Assert.Same(output, output.WithErrors(["other error"]));
+        Assert.Same(output, output.WithMessage("message"));
+        Assert.Same(output, output.WithMessages(["other message"]));
+        Assert.Equal(["error", "other error"], output.Errors);
+        Assert.Equal(["message", "other message"], output.Messages);
+        Assert.NotSame(output, PaginatedOutput<int>.New);
+    }
+
+    [Theory]
+    [InlineData(0, 10, 0)]
+    [InlineData(1, 10, 1)]
+    [InlineData(10, 10, 1)]
+    [InlineData(11, 10, 2)]
+    [InlineData(int.MaxValue, 1, int.MaxValue)]
+    public void GivenTotalItemsAndPageSize_WhenCalculating_ThenTotalPagesRoundsUp(int totalItems, int pageSize, int expected)
+    {
+        Assert.Equal(expected, PaginatedOutput<int>.New.WithPagination(1, pageSize, totalItems).TotalPages);
+    }
 }

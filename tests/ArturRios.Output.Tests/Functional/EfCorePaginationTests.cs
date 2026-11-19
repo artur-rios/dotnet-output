@@ -56,7 +56,7 @@ public sealed class EfCorePaginationTests : IDisposable
     [Fact]
     public async Task GivenARelationalQuery_WhenPaginatingAsync_ThenThePageAndMetadataComeBackFromTheDatabase()
     {
-        var result = await _context.People.PaginateAsync(3, 10, x => x.Id);
+        var result = await _context.People.PaginateAsync(3, 10, x => x.Id, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         Assert.NotNull(result.Data);
@@ -71,7 +71,7 @@ public sealed class EfCorePaginationTests : IDisposable
     {
         var result = await _context.People
             .Where(x => x.Active)
-            .PaginateAsync(1, 5, x => x.Id);
+            .PaginateAsync(1, 5, x => x.Id, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.NotNull(result.Data);
         Assert.Equal(new[] { 1, 3, 5, 7, 9 }, result.Data.Select(x => x.Id));
@@ -81,7 +81,7 @@ public sealed class EfCorePaginationTests : IDisposable
     [Fact]
     public async Task GivenAStringOrderKey_WhenPaginatingAsync_ThenTheProviderTranslatesTheOrdering()
     {
-        var result = await _context.People.PaginateAsync(1, 3, x => x.Name);
+        var result = await _context.People.PaginateAsync(1, 3, x => x.Name, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.NotNull(result.Data);
         Assert.Equal(new[] { "Person 01", "Person 02", "Person 03" }, result.Data.Select(x => x.Name));
@@ -92,7 +92,7 @@ public sealed class EfCorePaginationTests : IDisposable
     {
         var result = await _context.People
             .Where(x => x.Name == "nobody")
-            .PaginateAsync(1, 10, x => x.Id);
+            .PaginateAsync(1, 10, x => x.Id, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         Assert.NotNull(result.Data);
@@ -106,7 +106,7 @@ public sealed class EfCorePaginationTests : IDisposable
     {
         // The offset used to wrap to a negative OFFSET, which SQLite reads as no offset at all, so the
         // database answered a request for a far-out page with the first page.
-        var result = await _context.People.PaginateAsync(int.MaxValue, 10, x => x.Id);
+        var result = await _context.People.PaginateAsync(int.MaxValue, 10, x => x.Id, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         Assert.NotNull(result.Data);
@@ -129,7 +129,7 @@ public sealed class EfCorePaginationTests : IDisposable
     [Fact]
     public async Task GivenASuppliedTotalCount_WhenPaginatingAsync_ThenTheDatabaseIsNotCounted()
     {
-        var result = await _context.People.PaginateAsync(1, 10, x => x.Id, totalCount: 100);
+        var result = await _context.People.PaginateAsync(1, 10, x => x.Id, totalCount: 100, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(100, result.TotalItems);
         Assert.Equal(10, result.TotalPages);

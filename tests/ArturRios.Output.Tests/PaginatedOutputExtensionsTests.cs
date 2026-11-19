@@ -64,7 +64,7 @@ public class PaginatedOutputExtensionsTests
     {
         var data = Enumerable.Range(1, 23).Select(i => new Item { Id = i }).ToList();
 
-        var result = await data.AsQueryable().PaginateAsync(pageNumber, pageSize, x => x.Id);
+        var result = await data.AsQueryable().PaginateAsync(pageNumber, pageSize, x => x.Id, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.NotNull(result.Data);
         Assert.Empty(result.Data);
@@ -117,7 +117,7 @@ public class PaginatedOutputExtensionsTests
     {
         var data = Enumerable.Range(1, 23).Select(i => new Item { Id = i }).ToList();
 
-        var result = await data.AsQueryable().PaginateAsync(3, 10);
+        var result = await data.AsQueryable().PaginateAsync(3, 10, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.NotNull(result.Data);
         Assert.Equal(3, result.Data.Count);
@@ -134,7 +134,7 @@ public class PaginatedOutputExtensionsTests
             new() { Id = 2, Value = "b" }, new() { Id = 1, Value = "a" }, new() { Id = 3, Value = "c" }
         };
 
-        var result = await data.AsQueryable().PaginateAsync(1, 2);
+        var result = await data.AsQueryable().PaginateAsync(1, 2, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.NotNull(result);
         Assert.Equal(1, result.PageNumber);
@@ -151,7 +151,7 @@ public class PaginatedOutputExtensionsTests
             new() { Id = 2, Value = "b" }, new() { Id = 1, Value = "a" }, new() { Id = 3, Value = "c" }
         };
 
-        var result = await data.AsQueryable().PaginateAsync(1, 2, x => x.Id);
+        var result = await data.AsQueryable().PaginateAsync(1, 2, x => x.Id, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.NotNull(result);
         Assert.Equal(1, result.PageNumber);
@@ -165,7 +165,7 @@ public class PaginatedOutputExtensionsTests
     {
         var data = Enumerable.Range(1, 3).Select(i => new Item { Id = i }).ToList();
 
-        var result = await data.AsQueryable().PaginateAsync(0, 0);
+        var result = await data.AsQueryable().PaginateAsync(0, 0, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.NotNull(result);
         Assert.Equal(1, result.PageNumber);
@@ -186,7 +186,7 @@ public class PaginatedOutputExtensionsTests
     {
         IQueryable<Item> query = null!;
 
-        await Assert.ThrowsAsync<ArgumentNullException>(() => query.PaginateAsync(1, 10));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => query.PaginateAsync(1, 10, cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -206,7 +206,7 @@ public class PaginatedOutputExtensionsTests
     {
         var data = Enumerable.Range(1, 5).Select(i => new Item { Id = i }).ToList();
 
-        var result = await data.AsQueryable().PaginateAsync(-7, 2);
+        var result = await data.AsQueryable().PaginateAsync(-7, 2, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(1, result.PageNumber);
         Assert.NotNull(result.Data);
@@ -245,7 +245,7 @@ public class PaginatedOutputExtensionsTests
     {
         var data = new List<Item>();
 
-        var result = await data.AsQueryable().PaginateAsync(1, 10);
+        var result = await data.AsQueryable().PaginateAsync(1, 10, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.NotNull(result.Data);
         Assert.Empty(result.Data);
@@ -272,7 +272,7 @@ public class PaginatedOutputExtensionsTests
     {
         var data = Enumerable.Range(1, 5).Select(i => new Item { Id = i }).ToList();
 
-        var result = await data.AsQueryable().PaginateAsync(99, 2);
+        var result = await data.AsQueryable().PaginateAsync(99, 2, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.NotNull(result.Data);
         Assert.Empty(result.Data);
@@ -299,7 +299,7 @@ public class PaginatedOutputExtensionsTests
     {
         var data = Enumerable.Range(1, 5).Select(i => new Item { Id = i }).ToList();
 
-        var result = await data.AsQueryable().PaginateAsync(1, 2, totalCount: 42);
+        var result = await data.AsQueryable().PaginateAsync(1, 2, totalCount: 42, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(42, result.TotalItems);
         Assert.Equal(21, result.TotalPages);
@@ -323,7 +323,7 @@ public class PaginatedOutputExtensionsTests
     {
         var data = Enumerable.Range(1, 5).Select(i => new Item { Id = i }).ToList();
 
-        var result = await data.AsQueryable().PaginateAsync(1, 2, totalCount: -10);
+        var result = await data.AsQueryable().PaginateAsync(1, 2, totalCount: -10, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(0, result.TotalItems);
         Assert.Equal(0, result.TotalPages);
@@ -346,7 +346,7 @@ public class PaginatedOutputExtensionsTests
     {
         var data = Enumerable.Range(1, 5).Select(i => new Item { Id = i }).ToList();
 
-        var result = await data.AsQueryable().PaginateAsync(1, 2, totalCount: 0);
+        var result = await data.AsQueryable().PaginateAsync(1, 2, totalCount: 0, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.NotNull(result.Data);
         Assert.Equal(2, result.Data.Count);
@@ -375,7 +375,7 @@ public class PaginatedOutputExtensionsTests
             new() { Id = 1, Value = "c" }, new() { Id = 2, Value = "a" }, new() { Id = 3, Value = "b" }
         };
 
-        var result = await data.AsQueryable().PaginateAsync(1, 3, x => x.Value);
+        var result = await data.AsQueryable().PaginateAsync(1, 3, x => x.Value, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.NotNull(result.Data);
         Assert.Equal(new[] { "a", "b", "c" }, result.Data.Select(x => x.Value));
@@ -397,7 +397,7 @@ public class PaginatedOutputExtensionsTests
     {
         var source = new CapturingQueryable<Item>(Enumerable.Range(1, 3).Select(i => new Item { Id = i }));
 
-        _ = await source.PaginateAsync(1, 3, x => x.Id);
+        _ = await source.PaginateAsync(1, 3, x => x.Id, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.NotNull(source.LastExpression);
         Assert.DoesNotContain("Convert(", source.LastExpression!.ToString());

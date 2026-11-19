@@ -4,6 +4,10 @@
 # [coverage]`, the docs Dockerfile). It ports the coverage steps of the library's build-docs-and-coverage-report.yml.
 # yggdrasil.yml runs it in the pinned .NET SDK image from the repository's root.
 #
+# This is CI's one run of the test suite: the `test` check formats, builds and checks the categories, and runs no
+# test, since yggdrasil runs each check in a container of its own and one check cannot read another's result. Every
+# test category runs, and a test that skips fails the check, as a failing one does: it would under-report coverage.
+#
 # REPORTGENERATOR_LICENSE, when set and not empty, is ReportGenerator's PRO license (yggdrasil.yml binds the Jenkins
 # credential reportgenerator-license to it). Without it -- a build of a renovate/* branch binds no credential, nor
 # does a run on your machine -- the free report is made instead, and the output says so. The license is passed to
@@ -27,7 +31,13 @@ export DOTNET_NOLOGO=1 DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_SKIP_FIRST_TIME_EXPE
 
 # Raw results go to coverage/ and the report to coverage-report/: neither is committed.
 rm -rf coverage coverage-report
-dotnet test "$SOLUTION" --configuration Release --collect:"XPlat Code Coverage" --results-directory coverage
+dotnet test "$SOLUTION" --configuration Release --collect:"XPlat Code Coverage" \
+  --logger "console;verbosity=normal" \
+  --logger "trx;LogFileName=coverage-tests.trx" --results-directory coverage
+if grep -q 'outcome="NotExecuted"' coverage/coverage-tests.trx; then
+  echo "ci/coverage.sh: some tests were skipped (outcome NotExecuted in coverage/coverage-tests.trx)" >&2
+  exit 1
+fi
 
 # The tool is installed into a directory of its own, not the user's global tools: the check runs as whoever the
 # CI engine runs it as, with no promise about a writable home.

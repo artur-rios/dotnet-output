@@ -127,4 +127,49 @@ public class DataOutputTests
         Assert.Equal(output.Timestamp, deserialized.Timestamp);
         Assert.True(deserialized.Success);
     }
+
+    [Fact]
+    public void GivenExistingData_WhenAddingData_ThenItIsReplaced()
+    {
+        var output = DataOutput<string>.New.WithData("first");
+
+        output.AddData("second");
+
+        Assert.Equal("second", output.Data);
+    }
+
+    [Fact]
+    public void GivenTheFluentHelpers_WhenChained_ThenTheSameDataOutputComesBack()
+    {
+        var output = DataOutput<int>.New;
+
+        Assert.Same(output, output.WithData(1));
+        Assert.Same(output, output.WithError("error"));
+        Assert.Same(output, output.WithErrors(["other error"]));
+        Assert.Same(output, output.WithMessage("message"));
+        Assert.Same(output, output.WithMessages(["other message"]));
+        Assert.Equal(["error", "other error"], output.Errors);
+        Assert.Equal(["message", "other message"], output.Messages);
+        Assert.Equal(1, output.Data);
+    }
+
+    [Fact]
+    public void GivenNullCollections_WhenUsingTheFluentHelpers_ThenTheyAreIgnored()
+    {
+        var output = DataOutput<int>.New.WithErrors(null).WithMessages(null);
+
+        Assert.True(output.Success);
+        Assert.Empty(output.Errors);
+        Assert.Empty(output.Messages);
+    }
+
+    [Fact]
+    public void GivenTwoAccessesToTheFactory_WhenCreating_ThenDistinctEmptyInstancesComeBack()
+    {
+        var first = DataOutput<string>.New;
+
+        Assert.NotSame(first, DataOutput<string>.New);
+        Assert.Null(first.Data);
+        Assert.True(first.Success);
+    }
 }

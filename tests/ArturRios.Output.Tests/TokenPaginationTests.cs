@@ -211,6 +211,89 @@ public class TokenPaginationTests
     }
 
     [Fact]
+    public void GivenAnObjectTypedKeyOverAStringProperty_WhenWalkingTheListing_ThenItemsComeBackOnceInKeyOrder()
+    {
+        // An object-typed selector, as a sort column picked at run time gives: the token's key is read back as the
+        // property's own type, not as object.
+        var query = Items(23).OrderBy(x => x.Id % 5).AsQueryable();
+        var seen = new List<Item>();
+        string? token = null;
+
+        do
+        {
+            var page = query.PaginateByToken<Item, object>(token, 3, x => x.Value, Options);
+
+            Assert.True(page.Success, string.Join(", ", page.Errors));
+            seen.AddRange(page.Data!);
+            token = page.NextPageToken;
+        } while (token is not null && seen.Count < 100);
+
+        Assert.Equal(Enumerable.Range(1, 23), seen.Select(x => x.Id));
+    }
+
+    [Fact]
+    public void GivenAnObjectTypedKeyOverAValueTypeProperty_WhenWalkingTheListing_ThenItemsComeBackOnceInKeyOrder()
+    {
+        // The boxing the selector does is looked through, so the filter compares the ints themselves.
+        var query = Items(23).OrderBy(x => x.Id % 5).AsQueryable();
+        var seen = new List<Item>();
+        string? token = null;
+
+        do
+        {
+            var page = query.PaginateByToken<Item, object>(token, 3, x => x.Id, Options, SortDirection.Descending);
+
+            Assert.True(page.Success, string.Join(", ", page.Errors));
+            seen.AddRange(page.Data!);
+            token = page.NextPageToken;
+        } while (token is not null && seen.Count < 100);
+
+        Assert.Equal(Enumerable.Range(1, 23).Reverse(), seen.Select(x => x.Id));
+    }
+
+    [Fact]
+    public async Task GivenAnObjectTypedKeyAndTieBreaker_WhenWalkingTheListingAsync_ThenNoRowIsDroppedOrRepeated()
+    {
+        var query = Enumerable.Range(1, 9).Select(i => new Item { Id = i, Value = $"v{i % 3}" }).AsQueryable();
+        var seen = new List<Item>();
+        string? token = null;
+
+        do
+        {
+            var page = await query.PaginateByTokenAsync<Item, object, object>(token, 2, x => x.Value, x => x.Id, Options,
+                cancellationToken: TestContext.Current.CancellationToken);
+
+            Assert.True(page.Success, string.Join(", ", page.Errors));
+            seen.AddRange(page.Data!);
+            token = page.NextPageToken;
+        } while (token is not null && seen.Count < 100);
+
+        Assert.Equal(Enumerable.Range(1, 9).OrderBy(i => i % 3).ThenBy(i => i), seen.Select(x => x.Id));
+    }
+
+    [Fact]
+    public void GivenATokenIssuedUnderAnotherCulture_WhenTheKeySelectorHasAFractionalConstant_ThenTheTokenIsAccepted()
+    {
+        // The fingerprint used to print the selector's constant in the current culture: 1.5 under en-US, 1,5 under
+        // pt-BR, so a token issued by one server was a mismatch on another.
+        var query = Items(10).AsQueryable();
+        string? token;
+
+        using (new CultureScope("en-US"))
+        {
+            token = query.PaginateByToken(null, 4, x => x.Id * 1.5, Options).NextPageToken;
+        }
+
+        Assert.NotNull(token);
+
+        using var culture = new CultureScope("pt-BR");
+        var page = query.PaginateByToken(token, 4, x => x.Id * 1.5, Options);
+
+        Assert.True(page.Success, string.Join(", ", page.Errors));
+        Assert.Equal([5, 6, 7, 8], page.Data!.Select(x => x.Id));
+    }
+
+    [Fact]
     public void GivenRowsInsertedBeforeTheCursor_WhenFetchingTheNextPage_ThenItNeitherRepeatsNorSkips()
     {
         var items = Items(23);
@@ -349,9 +432,9 @@ public class TokenPaginationTests
         var query = Items(3).AsQueryable();
         Expression<Func<Item, int>> key = x => x.Id;
 
-        await Assert.ThrowsAsync<ArgumentNullException>(() => ((IQueryable<Item>)null!).PaginateByTokenAsync(null, 10, key, Options));
-        await Assert.ThrowsAsync<ArgumentNullException>(() => query.PaginateByTokenAsync(null, 10, key, null!));
-        await Assert.ThrowsAsync<ArgumentException>(() => query.PaginateByTokenAsync(null, 10, key, Options with { SigningKey = [] }));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => ((IQueryable<Item>)null!).PaginateByTokenAsync(null, 10, key, Options, cancellationToken: TestContext.Current.CancellationToken));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => query.PaginateByTokenAsync(null, 10, key, null!, cancellationToken: TestContext.Current.CancellationToken));
+        await Assert.ThrowsAsync<ArgumentException>(() => query.PaginateByTokenAsync(null, 10, key, Options with { SigningKey = [] }, cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -364,7 +447,7 @@ public class TokenPaginationTests
 
         do
         {
-            var page = await query.PaginateByTokenAsync(token, 10, x => x.Id, Options, includeTotalCount: true);
+            var page = await query.PaginateByTokenAsync(token, 10, x => x.Id, Options, includeTotalCount: true, cancellationToken: TestContext.Current.CancellationToken);
 
             Assert.Equal(23, page.TotalItems);
             seen.AddRange(page.Data!);
@@ -385,7 +468,7 @@ public class TokenPaginationTests
 
         do
         {
-            var page = await query.PaginateByTokenAsync(token, 2, x => x.Value, x => x.Id, Options);
+            var page = await query.PaginateByTokenAsync(token, 2, x => x.Value, x => x.Id, Options, cancellationToken: TestContext.Current.CancellationToken);
 
             seen.AddRange(page.Data!);
             token = page.NextPageToken;
@@ -397,8 +480,95 @@ public class TokenPaginationTests
     [Fact]
     public async Task GivenAnEditedToken_WhenPaginatingByTokenAsync_ThenTheRequestIsRejectedAsInvalid()
     {
-        var page = await Items(3).AsQueryable().PaginateByTokenAsync("not.a-token", 10, x => x.Id, Options);
+        var page = await Items(3).AsQueryable().PaginateByTokenAsync("not.a-token", 10, x => x.Id, Options, cancellationToken: TestContext.Current.CancellationToken);
 
         AssertRejected(page, PageTokenErrors.Invalid);
+    }
+
+    private enum Stage
+    {
+        Draft,
+        Review,
+        Published
+    }
+
+    private sealed record Staged(int Id, Stage Stage, Stage? Optional);
+
+    private static List<Staged> StagedItems(int count) =>
+        Enumerable.Range(1, count).Select(i => new Staged(i, (Stage)(i % 3), (Stage)((i + 1) % 3))).ToList();
+
+    private static List<TItem> WalkAll<TItem>(Func<string?, PaginatedOutput<TItem>> fetchPage)
+    {
+        var items = new List<TItem>();
+        string? token = null;
+        var pages = 0;
+
+        do
+        {
+            var page = fetchPage(token);
+
+            Assert.True(page.Success, string.Join(", ", page.Errors));
+            items.AddRange(page.Data!);
+            token = page.NextPageToken;
+        } while (token is not null && ++pages < 100);
+
+        return items;
+    }
+
+    [Theory]
+    [InlineData(SortDirection.Ascending)]
+    [InlineData(SortDirection.Descending)]
+    public void GivenAnEnumKeyAndATieBreaker_WhenWalkingByToken_ThenEveryItemComesBackOnceInKeyOrder(SortDirection direction)
+    {
+        var query = StagedItems(7).AsQueryable();
+
+        var walked = WalkAll(token => query.PaginateByToken(token, 2, x => x.Stage, x => x.Id, Options, direction));
+
+        var expected = direction == SortDirection.Ascending
+            ? query.OrderBy(x => x.Stage).ThenBy(x => x.Id)
+            : query.OrderByDescending(x => x.Stage).ThenByDescending(x => x.Id);
+
+        Assert.Equal(expected.Select(x => x.Id), walked.Select(x => x.Id));
+    }
+
+    [Fact]
+    public void GivenAnObjectTypedEnumKey_WhenWalkingByToken_ThenEveryItemComesBackOnceInKeyOrder()
+    {
+        var query = StagedItems(7).AsQueryable();
+
+        var walked = WalkAll(token => query.PaginateByToken<Staged, object, int>(token, 2, x => x.Stage, x => x.Id, Options));
+
+        Assert.Equal(query.OrderBy(x => x.Stage).ThenBy(x => x.Id).Select(x => x.Id), walked.Select(x => x.Id));
+    }
+
+    [Fact]
+    public void GivenANullableEnumKey_WhenWalkingByToken_ThenEveryItemComesBackOnceInKeyOrder()
+    {
+        var query = StagedItems(7).AsQueryable();
+
+        var walked = WalkAll(token => query.PaginateByToken(token, 2, x => x.Optional, x => x.Id, Options));
+
+        Assert.Equal(query.OrderBy(x => x.Optional).ThenBy(x => x.Id).Select(x => x.Id), walked.Select(x => x.Id));
+    }
+
+    [Fact]
+    public void GivenTheLargestPageSize_WhenPaginatingByToken_ThenEveryItemComesBackOnOnePage()
+    {
+        var page = Items(5).AsQueryable().PaginateByToken(null, int.MaxValue, x => x.Id, Options);
+
+        Assert.True(page.Success, string.Join(", ", page.Errors));
+        Assert.Equal([1, 2, 3, 4, 5], page.Data!.Select(x => x.Id));
+        Assert.Null(page.NextPageToken);
+    }
+
+    [Fact]
+    public async Task GivenTheLargestPageSize_WhenPaginatingByTokenAsync_ThenEveryItemComesBackOnOnePage()
+    {
+        var page = await Items(5).AsQueryable().PaginateByTokenAsync(null, int.MaxValue, x => x.Id, Options,
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.True(page.Success, string.Join(", ", page.Errors));
+        Assert.Equal([1, 2, 3, 4, 5], page.Data!.Select(x => x.Id));
+        Assert.Null(page.NextPageToken);
     }
 }

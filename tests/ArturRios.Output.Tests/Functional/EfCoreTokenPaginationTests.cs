@@ -40,7 +40,8 @@ public sealed class EfCoreTokenPaginationTests : IDisposable
             CreatedAt = Start.AddMinutes(i),
             Day = Start.AddDays((i - 1) / 3),
             ExternalId = new Guid(i, 0, 0, new byte[8]),
-            Open = i % 2 == 1
+            Open = i % 2 == 1,
+            Status = (OrderStatus)(i % 4)
         }));
 
         _context.SaveChanges();
@@ -108,6 +109,24 @@ public sealed class EfCoreTokenPaginationTests : IDisposable
     }
 
     [Fact]
+    public async Task GivenAnObjectTypedStringKey_WhenWalkingByTokenAsync_ThenTheProviderTranslatesTheComparison()
+    {
+        var pages = await WalkAllAsync(token =>
+            _context.Orders.PaginateByTokenAsync<Order, object>(token, 4, x => x.Name, Options));
+
+        Assert.Equal(Enumerable.Range(1, 23), pages.SelectMany(x => x.Data!).Select(x => x.Id));
+    }
+
+    [Fact]
+    public async Task GivenAnObjectTypedValueTypeKey_WhenWalkingByTokenAsync_ThenTheProviderTranslatesTheComparison()
+    {
+        var pages = await WalkAllAsync(token =>
+            _context.Orders.PaginateByTokenAsync<Order, object>(token, 4, x => x.Id, Options, SortDirection.Descending));
+
+        Assert.Equal(Enumerable.Range(1, 23).Reverse(), pages.SelectMany(x => x.Data!).Select(x => x.Id));
+    }
+
+    [Fact]
     public async Task GivenADateTimeKey_WhenWalkingByTokenAsync_ThenTheProviderTranslatesTheComparison()
     {
         var pages = await WalkAllAsync(token => _context.Orders.PaginateByTokenAsync(token, 5, x => x.CreatedAt, Options));
@@ -118,12 +137,45 @@ public sealed class EfCoreTokenPaginationTests : IDisposable
     [Fact]
     public async Task GivenAGuidKey_WhenWalkingByTokenAsync_ThenRowsComeBackOnceInTheDatabasesGuidOrder()
     {
-        var expected = await _context.Orders.OrderBy(x => x.ExternalId).Select(x => x.Id).ToListAsync();
+        var expected = await _context.Orders.OrderBy(x => x.ExternalId).Select(x => x.Id).ToListAsync(cancellationToken: TestContext.Current.CancellationToken);
 
         var pages = await WalkAllAsync(token => _context.Orders.PaginateByTokenAsync(token, 5, x => x.ExternalId, Options));
 
         Assert.Equal(expected, pages.SelectMany(x => x.Data!).Select(x => x.Id));
         Assert.Equal(23, expected.Distinct().Count());
+    }
+
+    [Fact]
+    public async Task GivenAnEnumKeyAndATieBreaker_WhenWalkingByTokenAsync_ThenTheProviderTranslatesTheComparison()
+    {
+        var pages = await WalkAllAsync(token =>
+            _context.Orders.PaginateByTokenAsync(token, 4, x => x.Status, x => x.Id, Options));
+
+        var expected = Enumerable.Range(1, 23).OrderBy(i => i % 4).ThenBy(i => i);
+
+        Assert.Equal(expected, pages.SelectMany(x => x.Data!).Select(x => x.Id));
+    }
+
+    [Fact]
+    public async Task GivenAnEnumKeyAndATieBreaker_WhenWalkingByTokenAsyncDescending_ThenTheProviderTranslatesTheComparison()
+    {
+        var pages = await WalkAllAsync(token =>
+            _context.Orders.PaginateByTokenAsync(token, 4, x => x.Status, x => x.Id, Options, SortDirection.Descending));
+
+        var expected = Enumerable.Range(1, 23).OrderByDescending(i => i % 4).ThenByDescending(i => i);
+
+        Assert.Equal(expected, pages.SelectMany(x => x.Data!).Select(x => x.Id));
+    }
+
+    [Fact]
+    public async Task GivenAnObjectTypedEnumKey_WhenWalkingByTokenAsync_ThenTheProviderTranslatesTheComparison()
+    {
+        var pages = await WalkAllAsync(token =>
+            _context.Orders.PaginateByTokenAsync<Order, object, int>(token, 4, x => x.Status, x => x.Id, Options));
+
+        var expected = Enumerable.Range(1, 23).OrderBy(i => i % 4).ThenBy(i => i);
+
+        Assert.Equal(expected, pages.SelectMany(x => x.Data!).Select(x => x.Id));
     }
 
     [Fact]
@@ -162,12 +214,12 @@ public sealed class EfCoreTokenPaginationTests : IDisposable
     public async Task GivenTwoLaterPages_WhenFetchingThem_ThenBothRunTheSameParameterisedSql()
     {
         // Were the cursor inlined as a literal, every page would send different SQL and compile its own plan.
-        var first = await _context.Orders.PaginateByTokenAsync(null, 5, x => x.Id, Options);
-        var second = await _context.Orders.PaginateByTokenAsync(first.NextPageToken, 5, x => x.Id, Options);
+        var first = await _context.Orders.PaginateByTokenAsync(null, 5, x => x.Id, Options, cancellationToken: TestContext.Current.CancellationToken);
+        var second = await _context.Orders.PaginateByTokenAsync(first.NextPageToken, 5, x => x.Id, Options, cancellationToken: TestContext.Current.CancellationToken);
 
         _commands.Clear();
-        await _context.Orders.PaginateByTokenAsync(first.NextPageToken, 5, x => x.Id, Options);
-        await _context.Orders.PaginateByTokenAsync(second.NextPageToken, 5, x => x.Id, Options);
+        await _context.Orders.PaginateByTokenAsync(first.NextPageToken, 5, x => x.Id, Options, cancellationToken: TestContext.Current.CancellationToken);
+        await _context.Orders.PaginateByTokenAsync(second.NextPageToken, 5, x => x.Id, Options, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(2, _commands.Count);
         Assert.Equal(SqlOf(_commands[0]), SqlOf(_commands[1]));
@@ -179,12 +231,12 @@ public sealed class EfCoreTokenPaginationTests : IDisposable
     [Fact]
     public async Task GivenARowInsertedBeforeTheCursor_WhenFetchingTheNextPage_ThenItNeitherRepeatsNorSkips()
     {
-        var first = await _context.Orders.PaginateByTokenAsync(null, 10, x => x.Id, Options);
+        var first = await _context.Orders.PaginateByTokenAsync(null, 10, x => x.Id, Options, cancellationToken: TestContext.Current.CancellationToken);
 
         _context.Orders.Add(new Order { Id = 0, Name = "Order 00", CreatedAt = Start, Day = Start, ExternalId = Guid.Empty });
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var second = await _context.Orders.PaginateByTokenAsync(first.NextPageToken, 10, x => x.Id, Options);
+        var second = await _context.Orders.PaginateByTokenAsync(first.NextPageToken, 10, x => x.Id, Options, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(Enumerable.Range(11, 10), second.Data!.Select(x => x.Id));
     }
@@ -192,11 +244,11 @@ public sealed class EfCoreTokenPaginationTests : IDisposable
     [Fact]
     public async Task GivenAnEditedToken_WhenPaginatingByTokenAsync_ThenItIsRejectedWithoutQueryingTheDatabase()
     {
-        var first = await _context.Orders.PaginateByTokenAsync(null, 10, x => x.Id, Options);
+        var first = await _context.Orders.PaginateByTokenAsync(null, 10, x => x.Id, Options, cancellationToken: TestContext.Current.CancellationToken);
         var token = first.NextPageToken!;
 
         _commands.Clear();
-        var page = await _context.Orders.PaginateByTokenAsync((token[0] == 'A' ? "B" : "A") + token[1..], 10, x => x.Id, Options);
+        var page = await _context.Orders.PaginateByTokenAsync((token[0] == 'A' ? "B" : "A") + token[1..], 10, x => x.Id, Options, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.False(page.Success);
         Assert.Equal([PageTokenErrors.Invalid], page.Errors);
@@ -230,6 +282,16 @@ public sealed class EfCoreTokenPaginationTests : IDisposable
         public Guid ExternalId { get; init; }
 
         public bool Open { get; init; }
+
+        public OrderStatus Status { get; init; }
+    }
+
+    private enum OrderStatus
+    {
+        Placed,
+        Paid,
+        Shipped,
+        Delivered
     }
 
     private sealed class OrdersContext(DbContextOptions<OrdersContext> options) : DbContext(options)

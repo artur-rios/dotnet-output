@@ -7,6 +7,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [3.3.3] - 2026-11-19
+
+### Fixed
+
+- `PaginateByToken` and `PaginateByTokenAsync` work with an `object`-typed key or tiebreaker selector, as a sort column
+  picked at run time gives. The first page came back, but the second threw `InvalidCastException` for a reference-type
+  property (`x => x.Name`) and `InvalidOperationException` ("cannot compare keys of type System.Object") for a boxed
+  value type (`x => (object)x.Id`). The token's value is now read, and compared, as the type the selector returns
+  before the cast to `object`.
+- A page token is no longer rejected as `PageTokenErrors.Mismatch` when it is read under another culture than the one
+  that issued it. The token's fingerprint included the key selector's text, whose constants print in the current
+  culture, so with a selector such as `x => x.Id * 1.5` a token issued under en-US did not match under pt-BR. The
+  selector is now printed with the invariant culture. Tokens issued under the invariant culture stay valid, and so do
+  those issued under any culture for a selector whose text the culture does not change; others, such as pt-BR tokens
+  for a selector with a fractional constant, are rejected once, as a mismatch, and the listing restarts from its first
+  page.
+- `PaginateByToken` and `PaginateByTokenAsync` page through an enum key (`x => x.Status`, `x => (object)x.Status`, or
+  a nullable enum). The first page came back, but the second threw `ArgumentException` for an enum, and every page
+  threw `InvalidOperationException` ("cannot compare keys") for a nullable enum: an enum has no comparison operator,
+  and its only `CompareTo` takes an `object`. The key is now compared as its underlying number, the order `OrderBy`
+  sorts it in and, for EF Core, the column an enum is stored in by default.
+- `PaginateByToken` and `PaginateByTokenAsync` with a page size of `int.MaxValue` return every item. They returned an
+  empty page, as a successful one, since the one item they read past the page to know whether there is a next one
+  made the count wrap to a negative number; against PostgreSQL the query failed instead.
+- A `PageTokenOptions.Lifetime` as long as `TimeSpan.MaxValue` no longer makes every token's read throw
+  `ArgumentOutOfRangeException`: a token's age is now compared with the lifetime, instead of its issue time plus the
+  lifetime, which overflowed, with the current time.
+
 ## [3.3.2] - 2026-11-14
 
 ### Changed
@@ -111,7 +139,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `CustomException`, a base exception carrying several messages.
 - `Paginate` and `PaginateAsync` extension methods to paginate an `IQueryable<T>` into a `PaginatedOutput<T>`.
 
-[Unreleased]: https://github.com/artur-rios/dotnet-output/compare/3.3.2...HEAD
+[Unreleased]: https://github.com/artur-rios/dotnet-output/compare/3.3.3...HEAD
+[3.3.3]: https://github.com/artur-rios/dotnet-output/compare/3.3.2...3.3.3
 [3.3.2]: https://github.com/artur-rios/dotnet-output/compare/3.3.1...3.3.2
 [3.3.1]: https://github.com/artur-rios/dotnet-output/compare/3.3.0...3.3.1
 [3.3.0]: https://github.com/artur-rios/dotnet-output/compare/3.2.0...3.3.0

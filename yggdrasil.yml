@@ -7,14 +7,13 @@
 # The scripts under ci/ run from the repository's root, so you can run them on your machine too.
 
 checks:
-  test:                                  # format, build, test categories, tests (ci/test.sh)
+  test:                                  # format, build, test categories (ci/test.sh); the tests run in coverage
     image: mcr.microsoft.com/dotnet/sdk:10.0.404@sha256:fe0fd4e93bd2fbb47c883b7a6369e5c8d3db8bf01cdc5981f6ee35fbdf3ff4fb
     run: ci/test.sh
-    # docker: true                       # Functional tests that use Testcontainers need the CI engine's socket
-    archive: "artifacts/test-results/**" # the .trx results, kept with the build
-  coverage:                              # the tests with coverage, and the HTML report (ci/coverage.sh)
+  coverage:                              # every test, once, with coverage, and the HTML report (ci/coverage.sh)
     image: mcr.microsoft.com/dotnet/sdk:10.0.404@sha256:fe0fd4e93bd2fbb47c883b7a6369e5c8d3db8bf01cdc5981f6ee35fbdf3ff4fb
     run: ci/coverage.sh
+    # docker: true                       # Functional tests that use Testcontainers need the CI engine's socket
     credentials:
       # ReportGenerator's PRO license. Not bound on renovate/* builds, nor when missing: the free report is made.
       REPORTGENERATOR_LICENSE: reportgenerator-license

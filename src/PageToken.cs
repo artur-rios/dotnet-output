@@ -1,4 +1,5 @@
 using System.Buffers.Text;
+using System.Globalization;
 using System.Linq.Expressions;
 using System.Security.Cryptography;
 using System.Text;
@@ -77,14 +78,41 @@ internal static class PageToken
         // A JSON array keeps the parts apart, so no two different requests serialize to the same bytes.
         var parts = JsonSerializer.SerializeToUtf8Bytes(new[]
         {
-            keySelector.ToString(),
-            tieBreakerSelector?.ToString(),
+            InvariantText(keySelector),
+            tieBreakerSelector is null ? null : InvariantText(tieBreakerSelector),
             direction.ToString(),
-            pageSize.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            pageSize.ToString(CultureInfo.InvariantCulture),
             options.Scope
         });
 
         return Base64Url.EncodeToString(SHA256.HashData(parts).AsSpan(0, FingerprintLength));
+    }
+
+    /// <summary>
+    /// The selector's text, printed under the invariant culture. <see cref="Expression.ToString"/> prints a constant
+    /// with the current culture (<c>x =&gt; (x.Id * 1,5)</c> under pt-BR), so servers with different cultures gave the
+    /// same listing different fingerprints and rejected each other's tokens as a mismatch. The invariant text is what
+    /// the invariant culture printed before, so tokens issued there stay valid.
+    /// </summary>
+    private static string InvariantText(LambdaExpression selector)
+    {
+        var culture = CultureInfo.CurrentCulture;
+
+        if (culture.Equals(CultureInfo.InvariantCulture))
+        {
+            return selector.ToString();
+        }
+
+        CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
+
+        try
+        {
+            return selector.ToString();
+        }
+        finally
+        {
+            CultureInfo.CurrentCulture = culture;
+        }
     }
 
     internal static string Create(PageTokenOptions options, string fingerprint, int pageNumber, JsonElement key,
@@ -156,8 +184,10 @@ internal static class PageToken
             return false;
         }
 
+        // The token's age against the lifetime, rather than its issue time plus the lifetime against now: the sum
+        // overflows DateTimeOffset for a lifetime as long as TimeSpan.MaxValue, and the age cannot.
         if (options.Lifetime is { } lifetime &&
-            DateTimeOffset.FromUnixTimeSeconds(read.IssuedAt) + lifetime < options.TimeProvider.GetUtcNow())
+            options.TimeProvider.GetUtcNow() - DateTimeOffset.FromUnixTimeSeconds(read.IssuedAt) > lifetime)
         {
             error = PageTokenErrors.Expired;
 
